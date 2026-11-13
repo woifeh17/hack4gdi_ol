@@ -53,8 +53,9 @@ export function clipProjectedPolygon(points, pose, horizontalFov, verticalFov) {
 
 function toWorldVertices(model, candidate) {
   const {relative, up} = candidate;
-  const east = Math.sin(relative.bearing * RAD) * relative.distance;
-  const north = Math.cos(relative.bearing * RAD) * relative.distance;
+  const bearing = (relative.bearing ?? 0) * RAD;
+  const east = Math.sin(bearing) * relative.distance;
+  const north = Math.cos(bearing) * relative.distance;
   return model.vertices.map(([x,y,z]) => [east+x, north+y, up+z]);
 }
 
@@ -66,35 +67,55 @@ function shade(surface, normal) {
   return `rgba(${r},${g},${b},0.80)`;
 }
 
-export function drawShadedBuildings(ctx, accepted, pose, fieldOfView, screenX, screenY, getModel) {
-  const polygons = [];
-  const wires = [];
-  for (const candidate of accepted) {
-    const model = getModel(candidate.poi);
-    if (!model?.vertices?.length) continue;
-    const vertices = toWorldVertices(model,candidate);
-    if (!model.faces?.length) {
-      if (model.edges?.length) wires.push({vertices,model});
-      continue;
-    }
-    for (const face of model.faces) {
-      const outer = face.rings?.[0];
-      if (!outer || outer.length < 3) continue;
-      const normal = faceNormal(vertices,outer);
-      if (!normal) continue;
-      const center = outer.reduce((sum,i) => sum.map((v,j) => v + vertices[i][j]/outer.length),[0,0,0]);
-      // Backface culling ensures rear walls do not shine through front walls.
-      if (dot(normal,center.map(v => -v)) <= 0) continue;
-      const rings = face.rings.map(ring => clipProjectedPolygon(
-        ring.map(i => vertices[i]),pose,...fieldOfView
-      )).filter(ring => ring.length >= 3);
-      if (!rings.length || rings[0].length < 3) continue;
-      const depth = rings[0].reduce((sum,p) => sum+p.depth,0)/rings[0].length;
-      polygons.push({rings,depth,color:shade(face.surface,normal), outline: !model.triangulated});
-    }
+export function projectBuilding(model, candidate, pose, fieldOfView) {
+  if (!model?.vertices?.length) return null;
+  const vertices = toWorldVertices(model, candidate);
+  if (!model.faces?.length) {
+    return model.edges?.length ? {polygons: [], anchor: null, wire: {vertices, model}} : null;
   }
 
-  // Painter's algorithm across *all* accepted buildings, not one by one.
+  const polygons = [];
+  let anchor = null;
+  let largestArea = 0;
+  for (const face of model.faces) {
+    const outer = face.rings?.[0];
+    if (!outer || outer.length < 3) continue;
+    const normal = faceNormal(vertices, outer);
+    if (!normal || dot(normal, vertices[outer[0]]) >= 0) continue;
+
+    const clipped = face.rings.map(ring => clipProjectedPolygon(
+      ring.map(i => vertices[i]), pose, ...fieldOfView
+    ));
+    const outline = clipped[0];
+    if (outline.length < 3) continue;
+
+    // Use the center of the largest clipped face as an alternate label anchor.
+    let twiceArea = 0;
+    for (let i = 0; i < outline.length; i++) {
+      const a = outline[i], b = outline[(i + 1) % outline.length];
+      twiceArea += a.x * b.y - b.x * a.y;
+    }
+    const area = Math.abs(twiceArea);
+    if (area <= 1e-10) continue;
+    if (area > largestArea) {
+      largestArea = area;
+      anchor = {
+        x: outline.reduce((sum, point) => sum + point.x, 0) / outline.length,
+        y: outline.reduce((sum, point) => sum + point.y, 0) / outline.length,
+      };
+    }
+    const depth = outline.reduce((sum, point) => sum + point.depth, 0) / outline.length;
+    polygons.push({
+      rings: clipped.filter(ring => ring.length >= 3),
+      depth, color: shade(face.surface, normal), outline: !model.triangulated,
+    });
+  }
+  return {polygons, anchor};
+}
+
+export function drawShadedBuildings(ctx, buildings, pose, fieldOfView, screenX, screenY) {
+  const polygons = buildings.flatMap(building => building.polygons);
+  // Draw all accepted buildings in shared depth order.
   polygons.sort((a,b) => b.depth-a.depth);
   ctx.lineWidth = 0.9;
   ctx.strokeStyle = 'rgba(207,250,238,0.43)';
@@ -113,7 +134,9 @@ export function drawShadedBuildings(ctx, accepted, pose, fieldOfView, screenX, s
   // Preserve legacy box placeholders as outlines, visually distinct from real footprints.
   ctx.strokeStyle = 'rgba(178,245,229,0.7)';
   ctx.lineWidth = 1.4;
-  for (const {vertices,model} of wires) {
+  for (const {wire} of buildings) {
+    if (!wire) continue;
+    const {vertices, model} = wire;
     ctx.beginPath();
     for (const [a,b] of model.edges) {
       const projected = projectEnuEdge(vertices[a],vertices[b],pose,...fieldOfView);

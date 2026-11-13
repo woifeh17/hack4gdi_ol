@@ -6,6 +6,7 @@ import {BUILDING_PRELOAD_DISTANCE_M, MAX_BUILDING_PRELOAD_COUNT} from '../ar/vis
 export function selectRelevantBuildings(pois, position, camera, {
   maxDistanceM = BUILDING_PRELOAD_DISTANCE_M,
   preloadAngle = 105,
+  nearbyDistanceM = 300,
   maxCount = MAX_BUILDING_PRELOAD_COUNT,
 } = {}) {
   if (!position || !Number.isFinite(position.lat) || !Number.isFinite(position.lon)) return [];
@@ -14,9 +15,11 @@ export function selectRelevantBuildings(pois, position, camera, {
     const relative = distanceAndBearing(position.lat, position.lon, poi.lat, poi.lon);
     if (!relative) return null;
     const delta = heading == null || relative.bearing == null ? 0 : Math.abs(normalize360(relative.bearing - heading + 180) - 180);
-    if (relative.distance > maxDistanceM || (heading != null && delta > preloadAngle)) return null;
-    return {poi, distance: relative.distance, bearingDelta: delta};
-  }).filter(Boolean).sort((a, b) => (a.distance + a.bearingDelta * 7) - (b.distance + b.bearingDelta * 7))
+    const nearby = relative.distance <= nearbyDistanceM;
+    if (relative.distance > maxDistanceM || (!nearby && delta > preloadAngle)) return null;
+    const score = relative.distance + (nearby ? 0 : delta * 7);
+    return {poi, score};
+  }).filter(Boolean).sort((a, b) => a.score - b.score)
     .slice(0, maxCount).map(item => item.poi);
 }
 
