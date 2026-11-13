@@ -1,5 +1,5 @@
 import {distanceAndBearing, projectPoi} from './geometry.js';
-import {drawShadedBuildings} from './shadedBuildings.js';
+import {drawShadedBuildings, projectBuilding} from './shadedBuildings.js';
 import {MAX_POI_DISTANCE_M as MAX_DISTANCE_M, MAX_VISIBLE_POIS} from './visibilityConfig.js';
 import {formatPoiDistance} from './formatDistance.js';
 
@@ -58,7 +58,7 @@ export function createOverlay(
     const height = canvas.clientHeight;
     if (!width || !height) return;
 
-    const scale = Math.min(window.devicePixelRatio || 1, 2);
+    const scale = Math.min(globalThis.devicePixelRatio || 1, 2);
     if (canvas.width !== Math.round(width * scale) || canvas.height !== Math.round(height * scale)) {
       canvas.width = Math.round(width * scale);
       canvas.height = Math.round(height * scale);
@@ -93,19 +93,20 @@ export function createOverlay(
     const candidates = [];
     entries.forEach((poi, index) => {
       const relative = offsets[index];
-      if (!relative || relative.bearing == null || relative.distance > MAX_DISTANCE_M) return;
+      if (!relative || relative.distance > MAX_DISTANCE_M) return;
 
       const up = Number.isFinite(poi.altitude) && Number.isFinite(position.altitude)
         ? poi.altitude - position.altitude : 0;
       const elevation = Math.atan2(up, relative.distance) / RAD;
-      const point = projectPoi(relative.bearing, elevation, camera, ...fieldOfView);
+      const building = projectBuilding(getModel(poi), {relative, up}, camera, fieldOfView);
+      const point = projectPoi(relative.bearing, elevation, camera, ...fieldOfView) ?? building?.anchor;
       if (!point) return;
 
       const priority = Number.isFinite(poi.priority) ? poi.priority : 2;
       const score = relative.distance -
         (priority === 1 ? PRIORITY_BONUS_M : 0) -
         (previouslyVisible.has(poi.id) ? STABILITY_BONUS_M : 0);
-      candidates.push({poi, index, relative, up, point, score});
+      candidates.push({poi, index, relative, building, point, score});
     });
 
     candidates.sort((a, b) => a.score - b.score ||
@@ -151,9 +152,8 @@ export function createOverlay(
       accepted.push(candidate);
     }
 
-    // All accepted POIs share the same label/model visibility decision.
-    // Faces are sorted and shaded together, rather than in arbitrary POI order.
-    drawShadedBuildings(ctx, accepted, camera, fieldOfView, screenX, screenY, getModel);
+    const visibleBuildings = accepted.map(candidate => candidate.building).filter(Boolean);
+    drawShadedBuildings(ctx, visibleBuildings, camera, fieldOfView, screenX, screenY);
     previouslyVisible = new Set(accepted.map(candidate => candidate.poi.id));
   };
 }

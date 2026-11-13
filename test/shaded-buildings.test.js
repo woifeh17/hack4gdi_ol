@@ -1,7 +1,7 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {meshFromBuildingFeature} from '../src/ar/meshGeometry.js';
-import {clipProjectedPolygon, drawShadedBuildings} from '../src/ar/shadedBuildings.js';
+import {clipProjectedPolygon, drawShadedBuildings, projectBuilding} from '../src/ar/shadedBuildings.js';
 import {manualCameraPose} from '../src/ar/geometry.js';
 import {createLocalBuildingProvider} from '../src/data/providers/localBuildings.js';
 import {applyBuildingManifest} from '../src/data/buildingManifest.js';
@@ -57,9 +57,10 @@ test('draws projected shaded surfaces for a real building', () => {
   const calls=[];
   const ctx={beginPath:()=>calls.push('begin'),moveTo:()=>{},lineTo:()=>{},
     closePath:()=>{},fill:()=>calls.push('fill'),stroke:()=>calls.push('stroke')};
-  drawShadedBuildings(ctx,[{
-    poi,relative:{bearing:0,distance:30},up:0,
-  }],manualCameraPose(0,0),[65,55], p=>p.x*100,p=>p.y*100,()=>model);
+  const pose = manualCameraPose(0, 0);
+  const fov = [65, 55];
+  const projected = projectBuilding(model, {relative: {bearing: 0, distance: 30}, up: 0}, pose, fov);
+  drawShadedBuildings(ctx, [projected], pose, fov, p => p.x * 100, p => p.y * 100);
   assert.ok(calls.includes('fill'));
 });
 

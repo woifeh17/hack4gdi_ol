@@ -64,6 +64,11 @@ test('lädt POIs anhand Entfernung und Richtung; Nord-Azimut 0 ist gültig', () 
   assert.deepEqual(found.map(p => p.id), ['north']);
 });
 
+test('lädt nahe Gebäudekomplexe auch entgegen der Blickrichtung vor', () => {
+  const campus = {...poi, lat: poi.lat - 0.001};
+  assert.deepEqual(selectRelevantBuildings([campus], poi, {heading: 0}), [campus]);
+});
+
 test('Kachelberechnung begrenzt das Suchgebiet', () => {
   const tiles = tilesForPoi(poi, 80);
   assert.ok(tiles.length >= 1 && tiles.length <= 4);
