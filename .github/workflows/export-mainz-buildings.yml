@@ -1,0 +1,43 @@
+name: Export Mainz OSM buildings
+
+# Generate building data on demand (one-time ~270 MB Geofabrik extract).
+# The generated asset ZIP must be uploaded to main by a user so branch-based
+# GitHub Pages is rebuilt. GITHUB_TOKEN bot commits do NOT trigger Pages.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install PBF reader
+        run: python -m pip install --disable-pip-version-check osmium
+      - name: Download current Geofabrik Rheinland-Pfalz OSM extract
+        run: |
+          curl --fail --location --retry 3 --retry-delay 10 \
+            --user-agent 'WindowLens Hack4GDI Mainz building export (GitHub Actions)' \
+            --output /tmp/rheinland-pfalz.osm.pbf \
+            https://download.geofabrik.de/europe/germany/rheinland-pfalz-latest.osm.pbf
+      - name: Extract available building footprints
+        run: python scripts/export_mainz_buildings.py /tmp/rheinland-pfalz.osm.pbf
+      - name: Prepare uploadable file tree
+        run: |
+          mkdir -p /tmp/windowlens-assets/assets
+          cp -a assets/buildings /tmp/windowlens-assets/assets/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windowlens-mainz-buildings
+          path: /tmp/windowlens-assets/
+          if-no-files-found: error
+          retention-days: 14
