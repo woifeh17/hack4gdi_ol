@@ -88,7 +88,7 @@
 
     <!-- Bottom-Sheet im Apple-Maps-Stil: peek → half → full -->
     <div class="sheet sheet--peek" id="sheet" aria-label="Bedienelemente">
-      <div class="sheet__grabber" id="sheet-grabber" role="button" tabindex="0" aria-label="Bedienelemente ein- und ausklappen"></div>
+      <button type="button" class="sheet__grabber" id="sheet-grabber" aria-controls="sheet-body" aria-expanded="false" aria-label="Karte ein- und ausklappen"></button>
 
       <!-- Immer sichtbare Primärsteuerung -->
       <div class="sheet__peek">
@@ -99,7 +99,7 @@
       </div>
 
       <!-- Inhalt: erst beim Ausziehen sichtbar -->
-      <div class="sheet__body">
+      <div class="sheet__body" id="sheet-body" inert>
         <div id="map-panel"></div>
         <footer class="data-attribution">Gebäudedaten: © GeoBasis-DE / <a href="https://www.lvermgeo.rlp.de">LVermGeoRP</a> 2026, <a href="https://www.govdata.de/dl-de/by-2-0">dl-de/by-2-0</a> [Daten bearbeitet] · <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">© OpenStreetMap-Mitwirkende (ODbL)</a> · <a href="https://www.geofabrik.de/data/download.html" target="_blank" rel="noopener noreferrer">Geofabrik-Extrakt</a></footer>
       </div>
