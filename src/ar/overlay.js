@@ -5,15 +5,15 @@ import {projectEnuEdge} from './buildingGeometry.js';
 const RAD = Math.PI / 180;
 
 // Unified POI visibility configuration
-const MAX_DISTANCE_M = 500;
-const MAX_VISIBLE_POIS = 6;
+const MAX_DISTANCE_M = 1500;
+const MAX_VISIBLE_POIS = 8;
 const COLLISION_GAP_PX = 10;
 const SCREEN_MARGIN_PX = 6;
 
 // Small bonuses for priority and display stability.
 // Distance remains the main selection criterion.
-const PRIORITY_BONUS_M = 15;
-const STABILITY_BONUS_M = 30;
+const PRIORITY_BONUS_M = 45;
+const STABILITY_BONUS_M = 60;
 
 function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
