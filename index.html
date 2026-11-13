@@ -11,12 +11,8 @@
   <script>
     // Theme-Initialisierung: gespeicherte Wahl oder Systemeinstellung.
     (function () {
-<<<<<<< HEAD
-      var saved = localStorage.getItem("theme");
-=======
       var saved;
       try { saved = localStorage.getItem("theme"); } catch { /* Storage may be unavailable. */ }
->>>>>>> c330c53 (fix sk's breaking LiquidGlass changes)
       var prefersLight = window.matchMedia("(prefers-color-scheme: light)").matches;
       document.documentElement.dataset.theme = saved || (prefersLight ? "light" : "dark");
     })();
@@ -24,15 +20,9 @@
 </head>
 <body>
   <!-- Startbildschirm: Vollbild-Kamera, hinter allem Glas -->
-<<<<<<< HEAD
-  <div class="scene-stage" id="scene-stage" aria-hidden="true">
-    <video id="camera" autoplay muted playsinline></video>
-    <canvas id="models"></canvas>
-=======
   <div class="scene-stage" id="scene-stage">
     <video id="camera" autoplay muted playsinline></video>
     <canvas id="models" aria-hidden="true"></canvas>
->>>>>>> c330c53 (fix sk's breaking LiquidGlass changes)
     <div id="markers" class="markers"></div>
   </div>
 
@@ -42,9 +32,6 @@
       <button id="explore" aria-pressed="true">Entdecken</button>
       <button id="atlas" aria-pressed="false">Atlas</button>
     </nav>
-<<<<<<< HEAD
-    <button id="theme-toggle" class="theme-toggle" role="switch" aria-checked="false" aria-label="Helles Design aktivieren"></button>
-=======
     <button type="button" id="theme-toggle" class="theme-toggle" role="switch" aria-checked="false" aria-label="Helles Design aktivieren"></button>
     <div class="menu-root" id="menu-root">
       <button type="button" id="menu-toggle" class="menu-toggle" aria-label="Einstellungen öffnen" aria-controls="app-menu" aria-expanded="false" title="Einstellungen">&#8942;</button>
@@ -82,21 +69,16 @@
         </details>
       </div>
     </div>
->>>>>>> c330c53 (fix sk's breaking LiquidGlass changes)
   </header>
 
   <section id="scene" aria-labelledby="scene-title">
     <!-- HUD: Status, Szenen-Kopf und Gebäude-Zähler in einem Stapel -->
     <div id="hud">
-<<<<<<< HEAD
-      <p id="status" role="status">Kamera starten oder die Blickrichtung manuell testen.</p>
-=======
       <p id="status" role="status">WindowLens wird gestartet …</p>
       <div id="permission-banner" class="permission-banner" hidden>
         <span id="permission-message">Für AR ist eine Berechtigung erforderlich.</span>
         <button id="enable-ar" type="button" class="primary">AR aktivieren</button>
       </div>
->>>>>>> c330c53 (fix sk's breaking LiquidGlass changes)
       <div class="scene-header">
         <div><h1 id="scene-title">Blick aus dem Zug</h1><p id="position">Mainz · Referenzstandort</p></div>
         <output id="pose" aria-label="Azimut und Neigung">203° / 0°</output>
@@ -118,34 +100,8 @@
 
       <!-- Inhalt: erst beim Ausziehen sichtbar -->
       <div class="sheet__body">
-<<<<<<< HEAD
-        <details open>
-          <summary>Blickrichtung und Kalibrierung</summary>
-          <div class="actions">
-            <button id="sensors">Sensoren aktivieren</button>
-            <button id="switch" disabled>Kamera wechseln</button>
-            <label><input type="checkbox" id="manual" checked> Manuelle Blickrichtung</label>
-          </div>
-          <div class="settings" id="manual-controls">
-            <label>Azimut <input id="heading" type="range" min="0" max="359" value="203"></label>
-            <label>Neigung <input id="pitch" type="range" min="-89" max="89" value="0"></label>
-          </div>
-          <div class="settings">
-            <label>Horizontales Sichtfeld <input id="hfov" type="range" min="30" max="120" value="65"></label>
-            <label>Vertikales Sichtfeld <input id="vfov" type="range" min="25" max="110" value="55"></label>
-          </div>
-          <form id="calibration" class="actions">
-            <label>Bekannter Azimut <input id="known-heading" type="number" min="0" max="359.9" step="any" value="0" required> °</label>
-            <button>Azimut kalibrieren</button>
-            <button type="button" id="zero">Neigung nullen</button>
-            <button type="button" id="reset">Kalibrierung löschen</button>
-          </form>
-        </details>
-        <div id="map-panel"></div>
-=======
         <div id="map-panel"></div>
         <footer class="data-attribution">Gebäudedaten: © GeoBasis-DE / <a href="https://www.lvermgeo.rlp.de">LVermGeoRP</a> 2026, <a href="https://www.govdata.de/dl-de/by-2-0">dl-de/by-2-0</a> [Daten bearbeitet] · <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">© OpenStreetMap-Mitwirkende (ODbL)</a> · <a href="https://www.geofabrik.de/data/download.html" target="_blank" rel="noopener noreferrer">Geofabrik-Extrakt</a></footer>
->>>>>>> c330c53 (fix sk's breaking LiquidGlass changes)
       </div>
     </div>
   </section>
@@ -160,11 +116,6 @@
     <h2>Aufgezeichnete Fahrten</h2><ul data-journeys></ul>
   </section>
 
-<<<<<<< HEAD
-  <footer class="data-attribution">Gebäudedaten: <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">© OpenStreetMap-Mitwirkende (ODbL)</a> · <a href="https://osmbuildings.org/" target="_blank" rel="noopener noreferrer">OSM Buildings</a></footer>
-
-=======
->>>>>>> c330c53 (fix sk's breaking LiquidGlass changes)
   <dialog id="poi-dialog" aria-labelledby="poi-title">
     <form method="dialog"><button class="close" aria-label="Details schließen">×</button></form>
     <h2 id="poi-title"></h2><p data-description></p><p data-coordinates></p>
@@ -178,11 +129,7 @@
       var root = document.documentElement;
       var light = root.dataset.theme !== "light";
       root.dataset.theme = light ? "light" : "dark";
-<<<<<<< HEAD
-      localStorage.setItem("theme", root.dataset.theme);
-=======
       try { localStorage.setItem("theme", root.dataset.theme); } catch { /* Keep the current theme. */ }
->>>>>>> c330c53 (fix sk's breaking LiquidGlass changes)
       this.setAttribute("aria-checked", String(light));
       this.setAttribute("aria-label", light ? "Dunkles Design aktivieren" : "Helles Design aktivieren");
     });
