@@ -29,6 +29,7 @@
         <canvas id="models" aria-hidden="true"></canvas>
         <div id="markers"></div>
       </div>
+      <p id="building-status" class="building-status" role="status">0 Gebäude geladen</p>
       <div class="actions">
         <button id="camera-toggle" class="primary">Kamera starten</button>
         <button id="gps">GPS aktivieren</button>
@@ -69,6 +70,7 @@
       <h2>Aufgezeichnete Fahrten</h2><ul data-journeys></ul>
     </section>
   </main>
+  <footer class="data-attribution">Gebäudedaten: <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">© OpenStreetMap-Mitwirkende (ODbL)</a> · <a href="https://osmbuildings.org/" target="_blank" rel="noopener noreferrer">OSM Buildings</a></footer>
   <dialog id="poi-dialog" aria-labelledby="poi-title">
     <form method="dialog"><button class="close" aria-label="Details schließen">×</button></form>
     <h2 id="poi-title"></h2><p data-description></p><p data-coordinates></p>

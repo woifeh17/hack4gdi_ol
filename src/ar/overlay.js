@@ -1,8 +1,9 @@
 import {distanceAndBearing, projectPoi} from './geometry.js';
+import {projectEnuEdge} from './buildingGeometry.js';
 
 const radians = Math.PI / 180;
 
-export function createOverlay(canvas, markers, entries, onScan, video) {
+export function createOverlay(canvas, markers, entries, onScan, video, getModel = poi => poi.model) {
   const ctx = canvas.getContext('2d');
   const labels = entries.map(poi => {
     const button = document.createElement('button');
@@ -48,24 +49,22 @@ export function createOverlay(canvas, markers, entries, onScan, video) {
       const point = camera && relative?.bearing != null
         ? projectPoi(relative.bearing, elevation, camera, ...fieldOfView) : null;
       label.hidden = !point;
-      if (!point) return;
-      label.style.left = `${screenX(point)}px`;
-      label.style.top = `${screenY(point)}px`;
-      if (!poi.model) return;
-
-      const east = Math.sin(relative.bearing * radians) * relative.distance;
-      const north = Math.cos(relative.bearing * radians) * relative.distance;
-      const vertices = poi.model.vertices.map(([x, y, z]) => {
-        const e = east + x, n = north + y;
-        return projectPoi(Math.atan2(e, n) / radians,
-          Math.atan2(up + z, Math.hypot(e, n)) / radians, camera, ...fieldOfView);
-      });
+      if (point) {
+        label.style.left = `${screenX(point)}px`;
+        label.style.top = `${screenY(point)}px`;
+      }
+      const model = getModel(poi);
+      if (!model || !camera || !relative) return;
+      // Das Gebäude darf auch sichtbar sein, wenn sein POI-Mittelpunkt außerhalb liegt.
+      const east = Math.sin((relative.bearing ?? 0) * radians) * relative.distance;
+      const north = Math.cos((relative.bearing ?? 0) * radians) * relative.distance;
+      const vertices = model.vertices.map(([x, y, z]) => [east + x, north + y, up + z]);
       ctx.beginPath();
-      for (const [start, end] of poi.model.edges) {
-        const a = vertices[start], b = vertices[end];
-        if (!a || !b) continue;
-        ctx.moveTo(screenX(a), screenY(a));
-        ctx.lineTo(screenX(b), screenY(b));
+      for (const [start, end] of model.edges) {
+        const segment = projectEnuEdge(vertices[start], vertices[end], camera, ...fieldOfView);
+        if (!segment) continue;
+        ctx.moveTo(screenX(segment[0]), screenY(segment[0]));
+        ctx.lineTo(screenX(segment[1]), screenY(segment[1]));
       }
       ctx.stroke();
     });

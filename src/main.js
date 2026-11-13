@@ -3,12 +3,18 @@ import {createOrientation} from './device/orientation.js';
 import {createPosition} from './device/position.js';
 import {createPoseProvider} from './ar/pose.js';
 import {createOverlay} from './ar/overlay.js';
+<<<<<<< HEAD
 import {pois} from './data/pois.js';
 import { createMapPanel } from './map/map-panel.js';
+=======
+import {pois, createPoiLoader} from './data/pois.js';
+>>>>>>> 780a2f7843656aed2595c4078dade282cfa53595
 import {createPoiDetails} from './data/details.js';
 import {createAtlas} from './atlas/store.js';
 import {renderDashboard} from './atlas/view.js';
 import {createJourneyRecorder} from './journey/recorder.js';
+import {createOSMBuildingsProvider} from './data/providers/osmBuildings.js';
+import {createBuildingStream} from './poi/visibilityManager.js';
 
 const $ = id => document.getElementById(id);
 const announce = text => { $('status').textContent = text; };
@@ -16,6 +22,7 @@ const atlas = createAtlas();
 const recorder = createJourneyRecorder();
 const openPoi = createPoiDetails($('poi-dialog'), id => atlas.collect(id), announce);
 const video = $('camera');
+<<<<<<< HEAD
 const renderOverlay = createOverlay($("models"), $("markers"), pois, openPoi, video);
 const mapPanel = createMapPanel($('map-panel'), {
   pois,
@@ -32,15 +39,49 @@ fetch('./src/data/rail.geojson')
   }))
   .catch(err => console.error('Schienennetz konnte nicht geladen werden:', err));
 
+=======
+const buildingProvider = createOSMBuildingsProvider();
+
+let currentPois = pois;
+let poiLoader = null;
+
+function updatePoiDependentSystems(newPois) {
+  currentPois = newPois;
+  if (buildings) {
+    buildings = createBuildingStream(newPois, buildingProvider, {
+      onStatus: ({loaded, loading, errors}) => {
+        $('building-status').textContent = `${loaded} Gebäude geladen${loading ? ` · ${loading} im Abruf` : ''}${errors ? ` · ${errors} ohne abrufbares Modell` : ''}`;
+      },
+    });
+  }
+  if (renderOverlay) {
+    renderOverlay = createOverlay($('models'), $('markers'), newPois, openPoi, video,
+      poi => buildings.getModel(poi));
+  }
+}
+
+const buildings = createBuildingStream(pois, buildingProvider, {
+  onStatus: ({loaded, loading, errors}) => {
+    $('building-status').textContent = `${loaded} Gebäude geladen${loading ? ` · ${loading} im Abruf` : ''}${errors ? ` · ${errors} ohne abrufbares Modell` : ''}`;
+  },
+});
+const renderOverlay = createOverlay($('models'), $('markers'), pois, openPoi, video,
+  poi => buildings.getModel(poi));
+>>>>>>> 780a2f7843656aed2595c4078dade282cfa53595
 const camera = createCamera(video, active => {
   video.classList.toggle('active', active);
   $('camera-toggle').textContent = active ? 'Kamera stoppen' : 'Kamera starten';
   $('switch').disabled = !active;
 });
 const orientation = createOrientation(announce);
+<<<<<<< HEAD
 let mapCentered = false; // merkt sich, ob die Karte schon auf GPS gesetzt wurde
 
 const position = createPosition((fix, status) => {
+=======
+
+function handlePositionUpdate(fix, status) {
+>>>>>>> 780a2f7843656aed2595c4078dade282cfa53595
   $('position').textContent = fix.source === 'gps' ? status : 'Mainz · Referenzstandort';
   $('gps').textContent = position.active ? 'GPS beenden' : 'GPS aktivieren';
   recorder.sample(fix);
@@ -49,10 +90,35 @@ const position = createPosition((fix, status) => {
     mapCentered = true;
   }
   announce(status);
+<<<<<<< HEAD
 });
 
+=======
+  
+  if (poiLoader && fix.source) {
+    poiLoader.update(fix).then(newPois => {
+      if (newPois !== currentPois) {
+        updatePoiDependentSystems(newPois);
+      }
+    });
+  }
+}
+
+const position = createPosition(handlePositionUpdate);
+>>>>>>> 780a2f7843656aed2595c4078dade282cfa53595
 const poses = createPoseProvider(position, orientation);
 const value = id => Number($(id).value);
+
+poiLoader = createPoiLoader(position, {
+  onUpdate: (newPois, pos) => {
+    console.log(`POIs updated: ${newPois.length} POIs loaded for position (${pos.lat}, ${pos.lon})`);
+    updatePoiDependentSystems(newPois);
+  },
+  minIntervalMs: 10000,
+  minDistanceM: 200,
+});
+
+poiLoader.refresh();
 const run = async action => {
   try { await action(); }
   catch (error) { announce(error.message); }
@@ -117,7 +183,7 @@ $('record').onclick = () => run(() => {
 
 function showAtlas(visible) {
   if (visible) {
-    renderDashboard($('dashboard'), atlas.read(), pois, openPoi);
+    renderDashboard($('dashboard'), atlas.read(), currentPois, openPoi);
     if (camera.active || $('camera-toggle').disabled) camera.stop();
   }
   $('scene').hidden = visible;
@@ -132,6 +198,7 @@ function draw() {
   if (!$('scene').hidden) {
     const manual = $('manual').checked ? {heading: value('heading'), pitch: value('pitch')} : null;
     const frame = poses.getFrame({facing: camera.facing, manual});
+    buildings.update(frame);
     $('pose').textContent = frame.camera
       ? `${frame.camera.heading == null ? '—' : Math.round(frame.camera.heading) + '°'} / ${Math.round(frame.camera.pitch)}°`
       : '— / —';
