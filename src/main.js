@@ -3,12 +3,8 @@ import {createOrientation} from './device/orientation.js';
 import {createPosition} from './device/position.js';
 import {createPoseProvider} from './ar/pose.js';
 import {createOverlay} from './ar/overlay.js';
-<<<<<<< HEAD
-import {pois} from './data/pois.js';
 import { createMapPanel } from './map/map-panel.js';
-=======
 import {pois, createPoiLoader} from './data/pois.js';
->>>>>>> 780a2f7843656aed2595c4078dade282cfa53595
 import {createPoiDetails} from './data/details.js';
 import {createAtlas} from './atlas/store.js';
 import {renderDashboard} from './atlas/view.js';
@@ -22,8 +18,6 @@ const atlas = createAtlas();
 const recorder = createJourneyRecorder();
 const openPoi = createPoiDetails($('poi-dialog'), id => atlas.collect(id), announce);
 const video = $('camera');
-<<<<<<< HEAD
-const renderOverlay = createOverlay($("models"), $("markers"), pois, openPoi, video);
 const mapPanel = createMapPanel($('map-panel'), {
   pois,
   center: [49.9881632, 8.2270956],
@@ -39,7 +33,6 @@ fetch('./src/data/rail.geojson')
   }))
   .catch(err => console.error('Schienennetz konnte nicht geladen werden:', err));
 
-=======
 const buildingProvider = createOSMBuildingsProvider();
 
 let currentPois = pois;
@@ -67,21 +60,15 @@ const buildings = createBuildingStream(pois, buildingProvider, {
 });
 const renderOverlay = createOverlay($('models'), $('markers'), pois, openPoi, video,
   poi => buildings.getModel(poi));
->>>>>>> 780a2f7843656aed2595c4078dade282cfa53595
 const camera = createCamera(video, active => {
   video.classList.toggle('active', active);
   $('camera-toggle').textContent = active ? 'Kamera stoppen' : 'Kamera starten';
   $('switch').disabled = !active;
 });
 const orientation = createOrientation(announce);
-<<<<<<< HEAD
+
 let mapCentered = false; // merkt sich, ob die Karte schon auf GPS gesetzt wurde
-
-const position = createPosition((fix, status) => {
-=======
-
 function handlePositionUpdate(fix, status) {
->>>>>>> 780a2f7843656aed2595c4078dade282cfa53595
   $('position').textContent = fix.source === 'gps' ? status : 'Mainz · Referenzstandort';
   $('gps').textContent = position.active ? 'GPS beenden' : 'GPS aktivieren';
   recorder.sample(fix);
@@ -90,10 +77,6 @@ function handlePositionUpdate(fix, status) {
     mapCentered = true;
   }
   announce(status);
-<<<<<<< HEAD
-});
-
-=======
   
   if (poiLoader && fix.source) {
     poiLoader.update(fix).then(newPois => {
@@ -105,7 +88,6 @@ function handlePositionUpdate(fix, status) {
 }
 
 const position = createPosition(handlePositionUpdate);
->>>>>>> 780a2f7843656aed2595c4078dade282cfa53595
 const poses = createPoseProvider(position, orientation);
 const value = id => Number($(id).value);
 
