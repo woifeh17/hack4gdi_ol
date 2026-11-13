@@ -1,76 +1,101 @@
 <!doctype html>
-<html lang="de">
+<html lang="de" data-theme="dark">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>WindowLens · Bahn-Atlas</title>
   <link rel="stylesheet" href="./style.css">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script type="module" src="./src/main.js"></script>
+  <script>
+    // Theme-Schalter: speichert Wahl und respektiert Systemeinstellung beim ersten Besuch.
+    (function () {
+      var saved = localStorage.getItem("theme");
+      var prefersLight = window.matchMedia("(prefers-color-scheme: light)").matches;
+      document.documentElement.dataset.theme = saved || (prefersLight ? "light" : "dark");
+    })();
+  </script>
 </head>
 <body>
+  <!-- Startbildschirm: Vollbild-Kamera, hinter allem Glas -->
+  <div class="scene-stage" id="scene-stage" aria-hidden="true">
+    <video id="camera" autoplay muted playsinline></video>
+    <canvas id="models"></canvas>
+    <div id="markers" class="markers"></div>
+  </div>
+
   <header class="header">
     <a href="./" class="brand">WindowLens <span>Bahn-Atlas</span></a>
     <nav aria-label="Ansichten">
       <button id="explore" aria-pressed="true">Entdecken</button>
       <button id="atlas" aria-pressed="false">Atlas</button>
     </nav>
+    <button id="theme-toggle" class="theme-toggle" role="switch" aria-checked="false" aria-label="Helles Design aktivieren"></button>
   </header>
-  <main>
-    <p id="status" role="status">Kamera starten oder die Blickrichtung manuell testen.</p>
-    <section id="scene" aria-labelledby="scene-title">
-      <div class="scene-header">
-        <div><h1 id="scene-title">Blick aus dem Zug</h1><p id="position">Mainz · Referenzstandort</p></div>
-        <output id="pose" aria-label="Azimut und Neigung">203° / 0°</output>
-      </div>
-      <div class="viewport" id="viewport">
-        <video id="camera" autoplay muted playsinline></video>
-        <canvas id="models" aria-hidden="true"></canvas>
-        <div id="markers"></div>
-      </div>
-      <p id="building-status" class="building-status" role="status">0 Gebäude geladen</p>
-      <div class="actions">
+
+  <p id="status" role="status">Kamera starten oder die Blickrichtung manuell testen.</p>
+
+  <section id="scene" aria-labelledby="scene-title">
+    <div class="scene-header">
+      <div><h1 id="scene-title">Blick aus dem Zug</h1><p id="position">Mainz · Referenzstandort</p></div>
+      <output id="pose" aria-label="Azimut und Neigung">203° / 0°</output>
+    </div>
+    <p id="building-status" role="status">0 Gebäude geladen</p>
+
+    <!-- Bottom-Sheet im Apple-Maps-Stil: peek → half → full -->
+    <div class="sheet sheet--peek" id="sheet" aria-label="Bedienelemente">
+      <div class="sheet__grabber" id="sheet-grabber" role="button" tabindex="0" aria-label="Bedienelemente ein- und ausklappen"></div>
+
+      <!-- Immer sichtbare Primärsteuerung -->
+      <div class="sheet__peek">
         <button id="camera-toggle" class="primary">Kamera starten</button>
         <button id="gps">GPS aktivieren</button>
         <button id="record">Fahrt starten</button>
         <output id="recording"></output>
       </div>
-      <details open>
-        <summary>Blickrichtung und Kalibrierung</summary>
-        <div class="actions">
-          <button id="sensors">Sensoren aktivieren</button>
-          <button id="switch" disabled>Kamera wechseln</button>
-          <label><input type="checkbox" id="manual" checked> Manuelle Blickrichtung</label>
-        </div>
-        <div class="settings" id="manual-controls">
-          <label>Azimut <input id="heading" type="range" min="0" max="359" value="203"></label>
-          <label>Neigung <input id="pitch" type="range" min="-89" max="89" value="0"></label>
-        </div>
-        <div class="settings">
-          <label>Horizontales Sichtfeld <input id="hfov" type="range" min="30" max="120" value="65"></label>
-          <label>Vertikales Sichtfeld <input id="vfov" type="range" min="25" max="110" value="55"></label>
-        </div>
-        <form id="calibration" class="actions">
-          <label>Bekannter Azimut <input id="known-heading" type="number" min="0" max="359.9" step="any" value="0" required> °</label>
-          <button>Azimut kalibrieren</button>
-          <button type="button" id="zero">Neigung nullen</button>
-          <button type="button" id="reset">Kalibrierung löschen</button>
-        </form>
-      </details>
-      <div id="map-panel"></div>
-    </section>
-    <section id="dashboard" aria-labelledby="atlas-title" hidden>
-      <h1 id="atlas-title">Dein Atlas</h1>
-      <div class="stats">
-        <p><strong data-count>0</strong> gesammelte POIs</p>
-        <p><strong data-distance>0</strong> gefahrene km</p>
+
+      <!-- Inhalt: erst beim Ausziehen sichtbar -->
+      <div class="sheet__body">
+        <details open>
+          <summary>Blickrichtung und Kalibrierung</summary>
+          <div class="actions">
+            <button id="sensors">Sensoren aktivieren</button>
+            <button id="switch" disabled>Kamera wechseln</button>
+            <label><input type="checkbox" id="manual" checked> Manuelle Blickrichtung</label>
+          </div>
+          <div class="settings" id="manual-controls">
+            <label>Azimut <input id="heading" type="range" min="0" max="359" value="203"></label>
+            <label>Neigung <input id="pitch" type="range" min="-89" max="89" value="0"></label>
+          </div>
+          <div class="settings">
+            <label>Horizontales Sichtfeld <input id="hfov" type="range" min="30" max="120" value="65"></label>
+            <label>Vertikales Sichtfeld <input id="vfov" type="range" min="25" max="110" value="55"></label>
+          </div>
+          <form id="calibration" class="actions">
+            <label>Bekannter Azimut <input id="known-heading" type="number" min="0" max="359.9" step="any" value="0" required> °</label>
+            <button>Azimut kalibrieren</button>
+            <button type="button" id="zero">Neigung nullen</button>
+            <button type="button" id="reset">Kalibrierung löschen</button>
+          </form>
+        </details>
+        <div id="map-panel"></div>
       </div>
-      <h2>Gesammelte POIs</h2><ul data-objects></ul>
-      <h2>Aufgezeichnete Fahrten</h2><ul data-journeys></ul>
-    </section>
-  </main>
+    </div>
+  </section>
+
+  <section id="dashboard" aria-labelledby="atlas-title" hidden>
+    <h1 id="atlas-title">Dein Atlas</h1>
+    <div class="stats">
+      <p><strong data-count>0</strong> gesammelte POIs</p>
+      <p><strong data-distance>0</strong> gefahrene km</p>
+    </div>
+    <h2>Gesammelte POIs</h2><ul data-objects></ul>
+    <h2>Aufgezeichnete Fahrten</h2><ul data-journeys></ul>
+  </section>
+
   <footer class="data-attribution">Gebäudedaten: <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">© OpenStreetMap-Mitwirkende (ODbL)</a> · <a href="https://osmbuildings.org/" target="_blank" rel="noopener noreferrer">OSM Buildings</a></footer>
+
   <dialog id="poi-dialog" aria-labelledby="poi-title">
     <form method="dialog"><button class="close" aria-label="Details schließen">×</button></form>
     <h2 id="poi-title"></h2><p data-description></p><p data-coordinates></p>
@@ -79,5 +104,15 @@
     <p data-error role="alert"></p>
     <button class="primary" data-collect>Zum Atlas hinzufügen</button>
   </dialog>
+  <script>
+    document.getElementById("theme-toggle").addEventListener("click", function () {
+      var root = document.documentElement;
+      var light = root.dataset.theme !== "light";
+      root.dataset.theme = light ? "light" : "dark";
+      localStorage.setItem("theme", root.dataset.theme);
+      this.setAttribute("aria-checked", String(light));
+      this.setAttribute("aria-label", light ? "Dunkles Design aktivieren" : "Helles Design aktivieren");
+    });
+  </script>
 </body>
 </html>
