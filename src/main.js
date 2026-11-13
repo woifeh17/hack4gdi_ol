@@ -11,6 +11,7 @@ import {renderDashboard} from './atlas/view.js';
 import {createJourneyRecorder} from './journey/recorder.js';
 import {createLocalBuildingProvider} from './data/providers/localBuildings.js';
 import {applyBuildingManifest} from './data/buildingManifest.js';
+import {applyLod2Manifest, createLod2BuildingProvider} from './data/providers/lod2Buildings.js';
 import {createBuildingStream} from './poi/visibilityManager.js';
 
 const $ = id => document.getElementById(id);
@@ -41,7 +42,7 @@ fetch('./src/data/rail.geojson')
   }))
   .catch(error => console.warn('Schienennetz konnte nicht geladen werden:', error));
 
-const buildingProvider = createLocalBuildingProvider();
+const buildingProvider = createLod2BuildingProvider(createLocalBuildingProvider());
 const buildings = createBuildingStream(currentPois, buildingProvider, {
   onStatus: ({loaded, loading, errors}) => {
     $('building-status').textContent =
@@ -51,18 +52,25 @@ const buildings = createBuildingStream(currentPois, buildingProvider, {
   },
 });
 
-// Discover only building GeoJSON files that were actually generated and hosted.
-// AR, Leaflet and Atlas keep the same POI objects; no live Overpass calls.
-fetch('./assets/buildings/manifest.json')
-  .then(response => {
-    if (!response.ok) throw new Error(`Building manifest: HTTP ${response.status}`);
-    return response.json();
-  })
-  .then(manifest => {
-    const available = applyBuildingManifest(currentPois, manifest);
-    console.info(`WindowLens: ${available} static OSM buildings available`);
-  })
-  .catch(error => console.warn('Static building manifest unavailable:', error));
+async function loadBuildingManifest(path) {
+  try {
+    const response = await fetch(path);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    return await response.json();
+  } catch (error) {
+    console.warn(`Building manifest unavailable at ${path}:`, error);
+    return null;
+  }
+}
+
+Promise.all([
+  loadBuildingManifest('./assets/buildings/manifest.json'),
+  loadBuildingManifest('./assets/buildings/lod2/manifest.json'),
+]).then(([osmManifest, lod2Manifest]) => {
+  const osm = applyBuildingManifest(currentPois, osmManifest);
+  const lod2 = applyLod2Manifest(currentPois, lod2Manifest);
+  console.info(`WindowLens: ${lod2} LoD2 POIs, ${osm} POIs with OSM geometry`);
+});
 
 // User preference – off by default; survives page reloads.
 const DISTANCE_STORAGE_KEY = 'windowlens.showPoiDistance.v1';

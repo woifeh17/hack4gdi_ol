@@ -90,7 +90,7 @@ export function drawShadedBuildings(ctx, accepted, pose, fieldOfView, screenX, s
       )).filter(ring => ring.length >= 3);
       if (!rings.length || rings[0].length < 3) continue;
       const depth = rings[0].reduce((sum,p) => sum+p.depth,0)/rings[0].length;
-      polygons.push({rings,depth,color:shade(face.surface,normal)});
+      polygons.push({rings,depth,color:shade(face.surface,normal), outline: !model.triangulated});
     }
   }
 
@@ -107,7 +107,7 @@ export function drawShadedBuildings(ctx, accepted, pose, fieldOfView, screenX, s
     }
     ctx.fillStyle = face.color;
     ctx.fill('evenodd');
-    ctx.stroke();
+    if (face.outline) ctx.stroke();
   }
 
   // Preserve legacy box placeholders as outlines, visually distinct from real footprints.

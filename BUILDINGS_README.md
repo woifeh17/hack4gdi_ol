@@ -44,3 +44,52 @@ We deliberately do not have the workflow push directly using `GITHUB_TOKEN`: Git
 ### Copyright
 
 OpenStreetMap data © OpenStreetMap contributors, ODbL 1.0. Extract delivered by Geofabrik. Keep the existing visible OSM attribution in WindowLens.
+
+## Amtliche LoD2-Gebäude
+
+WindowLens lädt bevorzugt vorberechnete LoD2-Meshes aus
+`assets/buildings/lod2/`. Für POIs ohne LoD2-Match stehen die bereits
+vorhandenen OSM-Gebäudemodelle zur Verfügung. Die App lädt die Mesh-Kacheln
+nur bei Bedarf vom selben Server.
+
+Der Export verarbeitet die amtlichen Dach- und Wandflächen einschließlich
+Gebäudeteilen und Polygonlöchern. Die Zuordnung nutzt den Flächenanteil
+innerhalb des POI-Umrings. Bei Punkt-POIs ohne Umring gilt ein Suchradius
+von 12 m. Flächen ohne Gebäude, etwa Gärten oder Friedhöfe, bleiben
+in der App als POIs sichtbar. Mehrere Gebäude können einem POI zugeordnet
+werden, und mehrere POIs können dasselbe Mesh referenzieren.
+
+### Mainz-Daten neu erzeugen
+
+```bash
+python -m pip install -r scripts/requirements-lod2.txt
+python scripts/export_lod2_buildings.py --rlp --osm-ways --cache /tmp/windowlens-lod2
+```
+
+Alternativ lässt sich **Export Mainz LoD2 buildings** unter GitHub Actions
+starten. Die heruntergeladene Ordnerstruktur unter `assets/buildings/lod2/`
+wird im Repository übernommen. Beim Aktualisieren können alte Kacheldateien
+entfernt werden, sobald das neue Manifest veröffentlicht ist.
+
+Die amtlichen RLP-Daten stammen aus dem
+[GeoShop RLP](https://geoshop.rlp.de/opendata-geb3dlo.html).
+© GeoBasis-DE / LVermGeoRP 2026, [dl-de/by-2-0](https://www.govdata.de/dl-de/by-2-0),
+www.lvermgeo.rlp.de [Daten bearbeitet]. OSM-Umringe dienen bei der
+Vorverarbeitung der Zuordnung und werden nicht mit den Meshes ausgeliefert.
+
+### Weitere Gebiete
+
+`--citygml` akzeptiert lokale CityGML-Dateien und ZIP-Archive mit semantischen
+LoD2-Gebäudeflächen. Für andere Länder `--crs` und `--attribution` angeben.
+`--catalog` akzeptiert ein JSON-Array mit `id`, `lat`, `lon` und optional
+`osmRef` oder `buildingMatch: false`. `--extents` akzeptiert WGS84-Polygone
+oder Multipolygone als GeoJSON-FeatureCollection mit `properties.id`.
+Damit lassen sich Umringe aus regionalen Daten oder aus einem OSM-Extrakt
+übergeben. `--osm-ways` ist für kleine Kataloge wie Mainz gedacht.
+Für einen deutschlandweiten Katalog empfiehlt sich ein Export je Region
+und die gemeinsame Bereitstellung der Manifeste und Mesh-Kacheln.
+
+Die Gebäudehöhen sind innerhalb jedes POI-Komplexes relativ zum tiefsten
+Gebäudeboden. Die vertikale AR-Ausrichtung nutzt weiterhin die bisherige
+Näherung der App. Für eine absolute Ausrichtung wären Geländehöhen entlang
+der Strecke und eine einheitliche Höhenreferenz für Kamera und Modelle nötig.

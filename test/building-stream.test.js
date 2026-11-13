@@ -87,6 +87,7 @@ test('OSM Buildings-Provider streamt Tiles und vermeidet doppelte Downloads', as
 test('greift bei nicht verfügbaren OSM Buildings-Tiles gezielt auf Overpass zurück', async () => {
   let tileCalls = 0, overpassCalls = 0;
   const provider = createOSMBuildingsProvider({
+    tileTemplate: 'https://example.org/{z}/{x}/{y}.json',
     fetchFn: async (url, options) => {
       if (options?.method === 'POST') {
         overpassCalls++;
