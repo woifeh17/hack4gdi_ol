@@ -1,3 +1,4 @@
+
 import {createCamera} from './device/camera.js';
 import {createOrientation} from './device/orientation.js';
 import {createPosition} from './device/position.js';
@@ -21,10 +22,6 @@ const announce = text => {
 const currentPois = pois;
 
 console.log(`WindowLens: ${currentPois.length} POIs geladen`);
-
-// Vollbild-Kamerabühne und Bottom-Sheet
-const stage = $('scene-stage');
-const sheet = $('sheet');
 
 const atlas = createAtlas();
 const recorder = createJourneyRecorder();
@@ -67,6 +64,8 @@ fetch('./src/data/rail.geojson')
   });
 
 // Gebäudestreaming
+// Aktuell haben die meisten neuen POIs noch keine
+// aktivierten Gebäudegeometrien.
 const buildingProvider = createOSMBuildingsProvider();
 
 const buildings = createBuildingStream(
@@ -82,8 +81,7 @@ const buildings = createBuildingStream(
   }
 );
 
-// AR-Overlay – Video und Canvas füllen die Vollbild-Bühne,
-// alle Größenberechnungen laufen automatisch auf 100vw/100vh.
+// AR-Overlay – nur eine einzige Instanz
 const renderOverlay = createOverlay(
   $('models'),
   $('markers'),
@@ -138,93 +136,6 @@ const run = async action => {
     announce(error.message);
   }
 };
-
-// ============================================================
-// Bottom-Sheet im Apple-Maps-Stil
-// Drei Zustände: peek (angedeutet), half (halb), full (maximiert).
-// Ziehen am Grabber, Tippen auf Grabber und Tastatur (Enter/Leer
-// und Pfeiltasten) wechseln zwischen den Zuständen.
-// ============================================================
-const SHEET_STATES = ['peek', 'half', 'full'];
-let sheetState = 'peek';
-
-function setSheetState(state) {
-  sheetState = state;
-  sheet.className = `sheet sheet--${state}`;
-}
-
-function stepSheet(direction) {
-  const index = Math.min(
-    SHEET_STATES.length - 1,
-    Math.max(0, SHEET_STATES.indexOf(sheetState) + direction)
-  );
-  setSheetState(SHEET_STATES[index]);
-}
-
-(() => {
-  const grabber = $('sheet-grabber');
-  let startY = 0;
-  let startTravel = 0;
-  let dragging = false;
-
-  const currentTravel = () =>
-    window.innerHeight - sheet.getBoundingClientRect().top;
-
-  grabber.addEventListener('pointerdown', event => {
-    dragging = true;
-    startY = event.clientY;
-    startTravel = currentTravel();
-    sheet.classList.add('dragging');
-    grabber.setPointerCapture(event.pointerId);
-    event.preventDefault();
-  });
-
-  grabber.addEventListener('pointermove', event => {
-    if (!dragging) return;
-    const delta = startY - event.clientY;
-    sheet.style.transform =
-      `translate(-50%, calc(100% - ${Math.max(40, startTravel + delta)}px))`;
-  });
-
-  const finish = event => {
-    if (!dragging) return;
-    dragging = false;
-    sheet.classList.remove('dragging');
-    sheet.style.transform = '';
-
-    const delta = startY - event.clientY;
-    const threshold = 40;
-
-    if (delta > threshold) {
-      stepSheet(1);            // nach oben gezogen
-    } else if (delta < -threshold) {
-      stepSheet(-1);           // nach unten gezogen
-    } else {
-      // Tippen: zwischen peek und full umschalten
-      setSheetState(sheetState === 'peek' ? 'full' : 'peek');
-    }
-  };
-
-  grabber.addEventListener('pointerup', finish);
-  grabber.addEventListener('pointercancel', finish);
-
-  // Tastaturbedienung
-  grabber.addEventListener('keydown', event => {
-    if (event.key === 'Enter' || event.key === ' ') {
-      event.preventDefault();
-      setSheetState(sheetState === 'peek' ? 'full' : 'peek');
-    } else if (event.key === 'ArrowUp') {
-      event.preventDefault();
-      stepSheet(1);
-    } else if (event.key === 'ArrowDown') {
-      event.preventDefault();
-      stepSheet(-1);
-    }
-  });
-
-  // Beim Scrollen im Body-Ende des Sheets weiter ausziehen
-  // (optional, Apple-Maps-Verhalten; Standard: nur Grabber).
-})();
 
 // Kamerasteuerung
 async function startCamera(facing) {
@@ -326,7 +237,7 @@ $('record').onclick = () => run(() => {
     recorder.current ? 'Fahrt beenden' : 'Fahrt starten';
 });
 
-// Ansichten: Entdecken (Vollbild-Kamera + Sheet) ↔ Atlas
+// Ansichten
 function showAtlas(visible) {
   if (visible) {
     renderDashboard(
@@ -341,11 +252,8 @@ function showAtlas(visible) {
     }
   }
 
-  // Sheet und schwebende Chips verschwinden im Atlas,
-  // das Dashboard liegt auf dem normalen Hintergrund.
   $('scene').hidden = visible;
   $('dashboard').hidden = !visible;
-  stage.hidden = visible;
 
   $('explore').setAttribute('aria-pressed', String(!visible));
   $('atlas').setAttribute('aria-pressed', String(visible));

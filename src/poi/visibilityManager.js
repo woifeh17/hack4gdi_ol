@@ -1,11 +1,12 @@
 // Welche POIs sollen beim Vorbeifahren vorgeladen werden?
 // Die eigentliche AR-Projektion bleibt unabhängig davon.
 import {distanceAndBearing, normalize360} from '../ar/geometry.js';
+import {BUILDING_PRELOAD_DISTANCE_M, MAX_BUILDING_PRELOAD_COUNT} from '../ar/visibilityConfig.js';
 
 export function selectRelevantBuildings(pois, position, camera, {
-  maxDistanceM = 3000,
+  maxDistanceM = BUILDING_PRELOAD_DISTANCE_M,
   preloadAngle = 105,
-  maxCount = 3,
+  maxCount = MAX_BUILDING_PRELOAD_COUNT,
 } = {}) {
   if (!position || !Number.isFinite(position.lat) || !Number.isFinite(position.lon)) return [];
   const heading = Number.isFinite(camera?.heading) ? camera.heading : null;
