@@ -3,7 +3,7 @@
 import {distanceAndBearing, normalize360} from '../ar/geometry.js';
 
 export function selectRelevantBuildings(pois, position, camera, {
-  maxDistanceM = 3000,
+  maxDistanceM = 300,
   preloadAngle = 105,
   maxCount = 3,
 } = {}) {
