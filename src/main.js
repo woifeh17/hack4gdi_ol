@@ -380,11 +380,34 @@ async function startSensors(userGesture = false) {
 // iOS zeigt Berechtigungsdialoge nur nacheinander und nur innerhalb der
 // Nutzergeste: parallele Requests führen dort zu NotAllowedError, ohne dass
 // der Nutzer einen Dialog sieht. Deshalb strikt sequenziell anfordern.
+// iOS 18: Der Sensor-Dialog wird am zuverlässigsten angezeigt und wieder
+// geschlossen, wenn requestPermission() das ERSTE Statement im Klick-Handler
+// ist (kein async-Wrapper davor). Erst danach folgen Kamera und Standort.
+let arFlowBusy = false;
 $('enable-ar').addEventListener('click', () => {
+  if (arFlowBusy) return;
+  arFlowBusy = true;
+  const api = window.DeviceOrientationEvent;
+  // Wichtig: synchron und direkt in der Geste anfordern.
+  const sensorPermission = (typeof api?.requestPermission === 'function' && !orientation.active)
+    ? api.requestPermission()
+    : null;
   void (async () => {
-    if (!orientation.active) await startSensors(true);
-    if (!camera.active && !cameraBusy) await startCamera();
-    if (!position.active) startGps();
+    try {
+      if (sensorPermission) {
+        if (await sensorPermission !== 'granted') throw new Error('Sensorberechtigung verweigert.');
+      }
+      if (!orientation.active) await startSensors(true); // Bereits erteilte Freigabe: requestPermission loest sofort ohne Dialog auf
+      if (!camera.active && !cameraBusy) await startCamera();
+      if (!position.active) startGps();
+    } catch (error) {
+      announce(`AR-Aktivierung: ${error.message}`);
+      console.warn('AR-Aktivierung fehlgeschlagen:', error);
+    } finally {
+      arFlowBusy = false;
+      syncControls();
+      updatePermissionBanner();
+    }
   })();
 });
 
@@ -524,13 +547,18 @@ window.addEventListener('pagehide', () => {
 
 // Automatic startup: camera, geolocation and (where allowed) sensors.
 // Browsers can still prompt or deny access; the banner offers a retry.
-// Kamera und GPS ebenfalls nacheinander starten, damit iOS die beiden
-// Berechtigungsdialoge nicht gleichzeitig anfordern muss.
+// Auf iOS (DeviceOrientationEvent.requestPermission existiert) KEINE
+// Freigabedialoge beim Seitenladen anfordern: Ohne direkte Nutzergeste
+// zeigt iOS 18 Safari den Dialog oft nur eingefroren an und er lässt sich
+// nicht mehr schließen. Dort läuft alles über den „AR aktivieren“-Banner.
 syncControls();
-void (async () => {
-  await startCamera();
-  startGps();
-})();
+const needsGestureForSensors = typeof window.DeviceOrientationEvent?.requestPermission === 'function';
+if (!needsGestureForSensors) {
+  void (async () => {
+    await startCamera();
+    startGps();
+  })();
+}
 // Sensoren ohne Geste nur „armieren“: startSensors(false) zeigt auf iOS
 // (DeviceOrientationEvent.requestPermission) nur den Banner.
 void startSensors(false);
