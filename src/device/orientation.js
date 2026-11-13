@@ -1,0 +1,68 @@
+import {cameraPoseFromEuler, manualCameraPose, normalize360} from '../ar/geometry.js';
+
+export function createOrientation(onStatus) {
+  let sample, timer;
+  let active = false;
+  let yaw = null;
+  let pitch = 0;
+
+  function receive(event) {
+    if (![event.alpha, event.beta, event.gamma].every(Number.isFinite)) return;
+    const absolute = event.absolute || event.type === 'deviceorientationabsolute';
+    if (!absolute && sample?.absolute && performance.now() - sample.time < 3000) return;
+    const first = !sample || sample.absolute !== absolute;
+    sample = {alpha: event.alpha, beta: event.beta, gamma: event.gamma, absolute, time: performance.now()};
+    if (first) {
+      yaw = null;
+      onStatus(absolute ? 'Absolute Orientierung aktiv.' : 'Relative Orientierung aktiv. Bitte Azimut kalibrieren.');
+    }
+  }
+
+  function rawPose(facing, yawOffset = 0, pitchOffset = 0) {
+    if (!sample || performance.now() - sample.time > 4000) return null;
+    const angle = screen.orientation?.angle ?? window.orientation ?? 0;
+    return cameraPoseFromEuler(sample.alpha, sample.beta, sample.gamma, angle, yawOffset, pitchOffset, facing);
+  }
+
+  return {
+    async start() {
+      const api = window.DeviceOrientationEvent;
+      if (!api) throw new Error('Orientierungssensoren werden hier nicht unterstützt.');
+      if (api.requestPermission && await api.requestPermission(true) !== 'granted') {
+        throw new Error('Sensorberechtigung verweigert.');
+      }
+      active = true;
+      window.addEventListener('deviceorientationabsolute', receive);
+      window.addEventListener('deviceorientation', receive);
+      onStatus('Warte auf Orientierungsdaten …');
+      timer = setTimeout(() => { if (!sample) onStatus('Keine Sensordaten. Manuelle Blickrichtung verfügbar.'); }, 2500);
+    },
+    stop() {
+      active = false;
+      clearTimeout(timer);
+      window.removeEventListener('deviceorientationabsolute', receive);
+      window.removeEventListener('deviceorientation', receive);
+      sample = null;
+      yaw = null;
+      pitch = 0;
+    },
+    get active() { return active; },
+    getPose({facing, manual}) {
+      if (manual) return manualCameraPose(manual.heading, manual.pitch);
+      const pose = rawPose(facing, yaw ?? 0, pitch);
+      return pose && (sample.absolute || yaw !== null) ? pose : null;
+    },
+    calibrateHeading(heading, facing) {
+      const pose = rawPose(facing, 0, pitch);
+      if (pose?.heading == null) throw new Error('Kamera annähernd waagerecht halten und Sensorwerte abwarten.');
+      yaw = normalize360(heading - pose.heading);
+    },
+    zeroPitch(facing) {
+      const pose = rawPose(facing);
+      if (!pose) throw new Error('Bitte zuerst Sensordaten abwarten.');
+      // Der alte Prototyp korrigiert die Neigung um die Bildschirm-Querachse.
+      pitch = -pose.pitch;
+    },
+    reset() { yaw = null; pitch = 0; },
+  };
+}

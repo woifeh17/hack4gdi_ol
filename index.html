@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>WindowLens · Bahn-Atlas</title>
+  <link rel="stylesheet" href="./style.css">
+  <script type="module" src="./src/main.js"></script>
+</head>
+<body>
+  <header class="header">
+    <a href="./" class="brand">WindowLens <span>Bahn-Atlas</span></a>
+    <nav aria-label="Ansichten">
+      <button id="explore" aria-pressed="true">Entdecken</button>
+      <button id="atlas" aria-pressed="false">Atlas</button>
+    </nav>
+  </header>
+  <main>
+    <p id="status" role="status">Kamera starten oder die Blickrichtung manuell testen.</p>
+    <section id="scene" aria-labelledby="scene-title">
+      <div class="scene-header">
+        <div><h1 id="scene-title">Blick aus dem Zug</h1><p id="position">Mainz · Referenzstandort</p></div>
+        <output id="pose" aria-label="Azimut und Neigung">203° / 0°</output>
+      </div>
+      <div class="viewport" id="viewport">
+        <video id="camera" autoplay muted playsinline></video>
+        <canvas id="models" aria-hidden="true"></canvas>
+        <div id="markers"></div>
+      </div>
+      <div class="actions">
+        <button id="camera-toggle" class="primary">Kamera starten</button>
+        <button id="gps">GPS aktivieren</button>
+        <button id="record">Fahrt starten</button>
+        <output id="recording"></output>
+      </div>
+      <details open>
+        <summary>Blickrichtung und Kalibrierung</summary>
+        <div class="actions">
+          <button id="sensors">Sensoren aktivieren</button>
+          <button id="switch" disabled>Kamera wechseln</button>
+          <label><input type="checkbox" id="manual" checked> Manuelle Blickrichtung</label>
+        </div>
+        <div class="settings" id="manual-controls">
+          <label>Azimut <input id="heading" type="range" min="0" max="359" value="203"></label>
+          <label>Neigung <input id="pitch" type="range" min="-89" max="89" value="0"></label>
+        </div>
+        <div class="settings">
+          <label>Horizontales Sichtfeld <input id="hfov" type="range" min="30" max="120" value="65"></label>
+          <label>Vertikales Sichtfeld <input id="vfov" type="range" min="25" max="110" value="55"></label>
+        </div>
+        <form id="calibration" class="actions">
+          <label>Bekannter Azimut <input id="known-heading" type="number" min="0" max="359.9" step="any" value="0" required> °</label>
+          <button>Azimut kalibrieren</button>
+          <button type="button" id="zero">Neigung nullen</button>
+          <button type="button" id="reset">Kalibrierung löschen</button>
+        </form>
+      </details>
+    </section>
+    <section id="dashboard" aria-labelledby="atlas-title" hidden>
+      <h1 id="atlas-title">Dein Atlas</h1>
+      <div class="stats">
+        <p><strong data-count>0</strong> gesammelte POIs</p>
+        <p><strong data-distance>0</strong> gefahrene km</p>
+      </div>
+      <h2>Gesammelte POIs</h2><ul data-objects></ul>
+      <h2>Aufgezeichnete Fahrten</h2><ul data-journeys></ul>
+    </section>
+  </main>
+  <dialog id="poi-dialog" aria-labelledby="poi-title">
+    <form method="dialog"><button class="close" aria-label="Details schließen">×</button></form>
+    <h2 id="poi-title"></h2><p data-description></p><p data-coordinates></p>
+    <div data-photos></div>
+    <p><a data-source target="_blank" rel="noopener noreferrer">Quelle und weitere Informationen ↗</a></p>
+    <p data-error role="alert"></p>
+    <button class="primary" data-collect>Zum Atlas hinzufügen</button>
+  </dialog>
+</body>
+</html>
