@@ -4,7 +4,7 @@ import {createPosition} from './device/position.js';
 import {createPoseProvider} from './ar/pose.js';
 import {createOverlay} from './ar/overlay.js';
 import { createMapPanel } from './map/map-panel.js';
-import {pois, createPoiLoader} from './data/pois.js';
+import {pois} from './data/mainzTestPois.js';
 import {createPoiDetails} from './data/details.js';
 import {createAtlas} from './atlas/store.js';
 import {renderDashboard} from './atlas/view.js';
@@ -35,23 +35,27 @@ fetch('./src/data/rail.geojson')
 
 const buildingProvider = createOSMBuildingsProvider();
 
-let currentPois = pois;
-let poiLoader = null;
+const currentPois = pois;
 
-function updatePoiDependentSystems(newPois) {
-  currentPois = newPois;
-  if (buildings) {
-    buildings = createBuildingStream(newPois, buildingProvider, {
-      onStatus: ({loaded, loading, errors}) => {
-        $('building-status').textContent = `${loaded} Gebäude geladen${loading ? ` · ${loading} im Abruf` : ''}${errors ? ` · ${errors} ohne abrufbares Modell` : ''}`;
-      },
-    });
-  }
-  if (renderOverlay) {
-    renderOverlay = createOverlay($('models'), $('markers'), newPois, openPoi, video,
-      poi => buildings.getModel(poi));
-  }
-}
+const buildings = createBuildingStream(pois, buildingProvider, {
+  onStatus: ({loaded, loading, errors}) => {
+    $('building-status').textContent =
+      `${loaded} Gebäude geladen` +
+      (loading ? ` · ${loading} im Abruf` : '') +
+      (errors ? ` · ${errors} ohne abrufbares Modell` : '');
+  },
+});
+
+const renderOverlay = createOverlay(
+  $('models'),
+  $('markers'),
+  pois,
+  openPoi,
+  video,
+  poi => buildings.getModel(poi)
+);
+
+console.log(`WindowLens: ${pois.length} POIs geladen`);
 
 const buildings = createBuildingStream(pois, buildingProvider, {
   onStatus: ({loaded, loading, errors}) => {
@@ -77,30 +81,12 @@ function handlePositionUpdate(fix, status) {
     mapCentered = true;
   }
   announce(status);
-  
-  if (poiLoader && fix.source) {
-    poiLoader.update(fix).then(newPois => {
-      if (newPois !== currentPois) {
-        updatePoiDependentSystems(newPois);
-      }
-    });
-  }
 }
 
 const position = createPosition(handlePositionUpdate);
 const poses = createPoseProvider(position, orientation);
 const value = id => Number($(id).value);
 
-poiLoader = createPoiLoader(position, {
-  onUpdate: (newPois, pos) => {
-    console.log(`POIs updated: ${newPois.length} POIs loaded for position (${pos.lat}, ${pos.lon})`);
-    updatePoiDependentSystems(newPois);
-  },
-  minIntervalMs: 10000,
-  minDistanceM: 200,
-});
-
-poiLoader.refresh();
 const run = async action => {
   try { await action(); }
   catch (error) { announce(error.message); }
