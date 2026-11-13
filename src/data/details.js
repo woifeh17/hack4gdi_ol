@@ -1,6 +1,10 @@
 export function createPoiDetails(dialog, collect, announce) {
   let selected;
-  dialog.querySelector('[data-collect]').addEventListener('click', () => {
+  let canCollect = true;
+  const collectButton = dialog.querySelector('[data-collect]');
+
+  collectButton.addEventListener('click', () => {
+    if (!canCollect) return; // zusätzliche Sicherung, falls der Button trotzdem ausgelöst wird
     try {
       collect(selected.id);
       dialog.close();
@@ -9,8 +13,13 @@ export function createPoiDetails(dialog, collect, announce) {
       dialog.querySelector('[data-error]').textContent = error.message;
     }
   });
-  return poi => {
+
+  // collectable ist standardmäßig true, damit bestehende Aufrufe unverändert funktionieren
+  return (poi, { collectable = true } = {}) => {
     selected = poi;
+    canCollect = collectable;
+    collectButton.hidden = !collectable;
+
     dialog.querySelector('h2').textContent = poi.name;
     dialog.querySelector('[data-description]').textContent = poi.description ?? poi.subtitle;
     dialog.querySelector('[data-coordinates]').textContent = `${poi.lat.toFixed(5)}° N · ${poi.lon.toFixed(5)}° E`;

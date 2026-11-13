@@ -88,3 +88,47 @@ a { color: var(--mint); }
 .map-panel__toggle:hover {
   background: #f3f4f6;
 }
+
+.map-route-bar {
+  display: none;
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  right: 56px; /* rechts Platz lassen für den Toggle-Button */
+  z-index: 1000; /* über den Leaflet-Ebenen */
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  margin: 0;
+  padding: 6px;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 6px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+
+.map-panel--open .map-route-bar {
+  display: flex;
+}
+
+.map-route-bar input {
+  flex: 1 1 140px;
+  min-width: 0;
+  padding: 4px 6px;
+}
+
+.map-route-bar__message:empty {
+  display: none;
+}
+
+.map-route-bar__message {
+  width: 100%;
+  margin: 0;
+  font-size: 0.85em;
+}
+
+/* Eingeklappt: alles außer dem Schalter ausblenden */
+.map-route-bar.map-route-bar--collapsed > :not(.map-route-bar__toggle) {
+  display: none;
+}
+
+[hidden] { display: none !important; }

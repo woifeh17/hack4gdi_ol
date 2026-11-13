@@ -34,12 +34,14 @@ const openPoi = createPoiDetails(
 
 const video = $('camera');
 
-// Leaflet-Karte mit dem neuen POI-Katalog
 const mapPanel = createMapPanel($('map-panel'), {
   pois: currentPois,
   center: [49.9881632, 8.2270956],
   zoom: 12,
-  onPoiClick: poi => openPoi(poi),
+  onPoiClick: poi => openPoi(poi, { collectable: false }),
+  onRouteRequest: (from, to) => {
+    console.log('Route angefragt:', from.properties.Bezeichnung, '→', to.properties.Bezeichnung);
+  },
 });
 
 // Sicherstellen, dass alle POIs auf der Karte liegen.
@@ -55,13 +57,26 @@ fetch('./src/data/rail.geojson')
   .then(data => {
     mapPanel.addGeoJson(data, {
       color: '#475569',
-      weight: 2,
       opacity: 0.8,
     });
   })
   .catch(error => {
     console.warn('Schienennetz konnte nicht geladen werden:', error);
   });
+  fetch('./src/data/stations.geojson')
+  .then(response => {
+    if (!response.ok) {
+      throw new Error(`Bahnhöfe: HTTP ${response.status}`);
+    }
+    return response.json();
+  })
+  .then(data => {
+    mapPanel.addStations(data);
+  })
+  .catch(error => {
+    console.warn('Bahnhöfe konnten nicht geladen werden:', error);
+  });
+
 
 // Gebäudestreaming
 // Aktuell haben die meisten neuen POIs noch keine
