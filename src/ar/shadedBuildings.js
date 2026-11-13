@@ -1,5 +1,3 @@
-import {projectEnuEdge} from './buildingGeometry.js';
-
 const RAD = Math.PI / 180;
 const SUN = [-0.45, 0.6, 0.65]; // fixed light direction, ENU
 const dot = (a, b) => a[0]*b[0] + a[1]*b[1] + a[2]*b[2];
@@ -68,11 +66,8 @@ function shade(surface, normal) {
 }
 
 export function projectBuilding(model, candidate, pose, fieldOfView) {
-  if (!model?.vertices?.length) return null;
+  if (!model?.vertices?.length || !model.faces?.length) return null;
   const vertices = toWorldVertices(model, candidate);
-  if (!model.faces?.length) {
-    return model.edges?.length ? {polygons: [], anchor: null, wire: {vertices, model}} : null;
-  }
 
   const polygons = [];
   let anchor = null;
@@ -110,10 +105,10 @@ export function projectBuilding(model, candidate, pose, fieldOfView) {
       depth, color: shade(face.surface, normal), outline: !model.triangulated,
     });
   }
-  return {polygons, anchor};
+  return anchor ? {polygons, anchor} : null;
 }
 
-export function drawShadedBuildings(ctx, buildings, pose, fieldOfView, screenX, screenY) {
+export function drawShadedBuildings(ctx, buildings, screenX, screenY) {
   const polygons = buildings.flatMap(building => building.polygons);
   // Draw all accepted buildings in shared depth order.
   polygons.sort((a,b) => b.depth-a.depth);
@@ -129,21 +124,5 @@ export function drawShadedBuildings(ctx, buildings, pose, fieldOfView, screenX, 
     ctx.fillStyle = face.color;
     ctx.fill('evenodd');
     if (face.outline) ctx.stroke();
-  }
-
-  // Preserve legacy box placeholders as outlines, visually distinct from real footprints.
-  ctx.strokeStyle = 'rgba(178,245,229,0.7)';
-  ctx.lineWidth = 1.4;
-  for (const {wire} of buildings) {
-    if (!wire) continue;
-    const {vertices, model} = wire;
-    ctx.beginPath();
-    for (const [a,b] of model.edges) {
-      const projected = projectEnuEdge(vertices[a],vertices[b],pose,...fieldOfView);
-      if (!projected) continue;
-      ctx.moveTo(screenX(projected[0]),screenY(projected[0]));
-      ctx.lineTo(screenX(projected[1]),screenY(projected[1]));
-    }
-    ctx.stroke();
   }
 }

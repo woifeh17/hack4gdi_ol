@@ -24,7 +24,7 @@ export function selectRelevantBuildings(pois, position, camera, {
 }
 
 export function createBuildingStream(pois, provider, {
-  onStatus = () => {}, maxModels = 8, maxConcurrent = 2,
+  onStatus = () => {}, maxModels = 24, maxConcurrent = 2,
   updateEveryMs = 1200, retryAfterMs = 60000,
   now = () => Date.now(),
 } = {}) {
@@ -32,6 +32,7 @@ export function createBuildingStream(pois, provider, {
   const pending = new Set();
   const failures = new Map();
   const queue = [];
+  let relevantIds = new Set();
   let lastUpdate = -Infinity;
   let active = 0;
 
@@ -40,7 +41,10 @@ export function createBuildingStream(pois, provider, {
   }
 
   function evict() {
-    while (models.size > maxModels) models.delete(models.keys().next().value);
+    for (const id of models.keys()) {
+      if (models.size <= maxModels) break;
+      if (!relevantIds.has(id)) models.delete(id);
+    }
   }
 
   function pump() {
@@ -78,7 +82,13 @@ export function createBuildingStream(pois, provider, {
     update(frame) {
       if (now() - lastUpdate < updateEveryMs) return;
       lastUpdate = now();
-      const relevant = selectRelevantBuildings(pois, frame.position, frame.camera);
+      const relevant = selectRelevantBuildings(pois, frame.position, frame.camera, {
+        maxCount: Math.min(maxModels, MAX_BUILDING_PRELOAD_COUNT),
+      });
+      relevantIds = new Set(relevant.map(poi => poi.id));
+
+      // Keep in-flight loads, but rebuild the waiting queue in current travel order.
+      for (const poi of queue.splice(0)) pending.delete(poi.id);
       relevant.forEach(schedule);
     },
     getModel(poi) {
@@ -87,7 +97,7 @@ export function createBuildingStream(pois, provider, {
         models.delete(poi.id);
         models.set(poi.id, model);
       }
-      return model ?? poi.model ?? null;
+      return model ?? null;
     },
     getStatus(poi) {
       if (models.has(poi.id)) return 'loaded';

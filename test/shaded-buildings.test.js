@@ -60,7 +60,7 @@ test('draws projected shaded surfaces for a real building', () => {
   const pose = manualCameraPose(0, 0);
   const fov = [65, 55];
   const projected = projectBuilding(model, {relative: {bearing: 0, distance: 30}, up: 0}, pose, fov);
-  drawShadedBuildings(ctx, [projected], pose, fov, p => p.x * 100, p => p.y * 100);
+  drawShadedBuildings(ctx, [projected], p => p.x * 100, p => p.y * 100);
   assert.ok(calls.includes('fill'));
 });
 

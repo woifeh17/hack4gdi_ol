@@ -32,7 +32,7 @@ test('published LoD2 tiles resolve every POI link and shade the MEWA Arena', asy
   const pose = manualCameraPose(0, 0);
   const fov = [65, 55];
   const building = projectBuilding(model, {relative, up: 0}, pose, fov);
-  drawShadedBuildings(ctx, [building], pose, fov, point => point.x, point => point.y);
+  drawShadedBuildings(ctx, [building], point => point.x, point => point.y);
   assert.ok(fills > 0);
 
   for (const poi of catalogue.filter(poi => poi.building?.lod2)) {

@@ -124,3 +124,22 @@ test('Streaming-Manager fragt denselben POI nicht in jedem Frame erneut ab', asy
   assert.equal(calls, 1);
   assert.equal(stream.getStatus(poi), 'loaded');
 });
+
+test('keeps the currently relevant building in cache when an outdated request finishes', async () => {
+  const old = {...poi, id: 'old', lat: 49.965, model: {edges: [[0, 1]]}};
+  const current = {...poi, id: 'current'};
+  const model = {vertices: [[0, 0, 0]], faces: []};
+  const finish = {};
+  const provider = {load: entry => new Promise(resolve => { finish[entry.id] = resolve; })};
+  const stream = createBuildingStream([old, current], provider, {maxModels: 1, updateEveryMs: 0});
+  stream.update({position: old});
+  assert.equal(stream.getModel(old), null);
+  stream.update({position: current});
+  await new Promise(resolve => setImmediate(resolve));
+  finish.current(model);
+  await new Promise(resolve => setImmediate(resolve));
+  finish.old(model);
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(stream.getModel(current), model);
+  assert.equal(stream.getModel(old), null);
+});
