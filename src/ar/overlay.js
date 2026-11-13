@@ -4,27 +4,30 @@ import {projectEnuEdge} from './buildingGeometry.js';
 
 const RAD = Math.PI / 180;
 
-// AR label settings
-const MAX_LABEL_DISTANCE_M = 300;
-const MAX_VISIBLE_LABELS = 6;
-const LABEL_GAP_PX = 10;
+// Unified POI visibility configuration
+const MAX_DISTANCE_M = 500;
+const MAX_VISIBLE_POIS = 6;
+const COLLISION_GAP_PX = 10;
 const SCREEN_MARGIN_PX = 6;
 
-// Small preference for labels already visible.
-// Prevents rapid switching while travelling.
-const PERSISTENCE_BONUS_M = 25;
+// Small bonuses for priority and display stability.
+// Distance remains the main selection criterion.
+const PRIORITY_BONUS_M = 15;
+const STABILITY_BONUS_M = 30;
 
-function overlaps(a, b, gap = LABEL_GAP_PX) {
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function overlaps(a, b) {
+  const gap = COLLISION_GAP_PX;
+
   return (
     a.left < b.right + gap &&
     a.right + gap > b.left &&
     a.top < b.bottom + gap &&
     a.bottom + gap > b.top
   );
-}
-
-function clamp(value, min, max) {
-  return Math.max(min, Math.min(max, value));
 }
 
 export function createOverlay(
@@ -37,7 +40,6 @@ export function createOverlay(
 ) {
   const ctx = canvas.getContext('2d');
 
-  // Remove markers from any previous overlay instance.
   markers.replaceChildren();
 
   const labels = entries.map(poi => {
@@ -48,22 +50,88 @@ export function createOverlay(
     button.hidden = true;
 
     button.addEventListener('click', () => onScan(poi));
-
     markers.append(button);
+
     return button;
   });
 
-  let lastPosition;
-  let offsets;
+  let lastPosition = null;
+  let offsets = [];
   let previouslyVisible = new Set();
+
+  function renderModel(
+    candidate,
+    camera,
+    fieldOfView,
+    screenX,
+    screenY
+  ) {
+    const {poi, relative, up} = candidate;
+    const model = getModel(poi);
+
+    if (!model?.vertices?.length || !model?.edges?.length) {
+      return;
+    }
+
+    const east =
+      Math.sin(relative.bearing * RAD) * relative.distance;
+
+    const north =
+      Math.cos(relative.bearing * RAD) * relative.distance;
+
+    const vertices = model.vertices.map(([x, y, z]) => [
+      east + x,
+      north + y,
+      up + z
+    ]);
+
+    ctx.beginPath();
+
+    let drawnEdges = 0;
+
+    for (const [start, end] of model.edges) {
+      const a = vertices[start];
+      const b = vertices[end];
+
+      if (!a || !b) continue;
+
+      const segment = projectEnuEdge(
+        a,
+        b,
+        camera,
+        ...fieldOfView
+      );
+
+      if (!segment) continue;
+
+      ctx.moveTo(
+        screenX(segment[0]),
+        screenY(segment[0])
+      );
+
+      ctx.lineTo(
+        screenX(segment[1]),
+        screenY(segment[1])
+      );
+
+      drawnEdges++;
+    }
+
+    if (drawnEdges > 0) {
+      ctx.stroke();
+    }
+  }
 
   return ({position, camera}, fieldOfView) => {
     const width = canvas.clientWidth;
     const height = canvas.clientHeight;
 
-    if (!width || !height || !position) return;
+    if (!width || !height) return;
 
-    const scale = Math.min(window.devicePixelRatio || 1, 2);
+    const scale = Math.min(
+      window.devicePixelRatio || 1,
+      2
+    );
 
     if (
       canvas.width !== Math.round(width * scale) ||
@@ -76,6 +144,17 @@ export function createOverlay(
     ctx.setTransform(scale, 0, 0, scale, 0, 0);
     ctx.clearRect(0, 0, width, height);
 
+    // Hide everything before calculating visibility.
+    for (const label of labels) {
+      label.hidden = true;
+    }
+
+    if (!position || !camera) {
+      previouslyVisible.clear();
+      return;
+    }
+
+    // Calculate geodetic offsets only after position changes.
     if (position !== lastPosition) {
       offsets = entries.map(poi =>
         distanceAndBearing(
@@ -89,35 +168,46 @@ export function createOverlay(
       lastPosition = position;
     }
 
-    // Respect the actual camera video dimensions.
     const videoAspect =
       video.classList.contains('active') && video.videoHeight
         ? video.videoWidth / video.videoHeight
         : width / height;
 
-    const frameWidth = Math.min(width, height * videoAspect);
-    const frameHeight = Math.min(height, width / videoAspect);
+    const frameWidth = Math.min(
+      width,
+      height * videoAspect
+    );
 
-    const left = (width - frameWidth) / 2;
-    const top = (height - frameHeight) / 2;
+    const frameHeight = Math.min(
+      height,
+      width / videoAspect
+    );
 
-    const screenX = point => left + point.x * frameWidth;
-    const screenY = point => top + point.y * frameHeight;
+    const frameLeft = (width - frameWidth) / 2;
+    const frameTop = (height - frameHeight) / 2;
+
+    const screenX = point =>
+      frameLeft + point.x * frameWidth;
+
+    const screenY = point =>
+      frameTop + point.y * frameHeight;
 
     ctx.strokeStyle = '#b2f5e5';
     ctx.lineWidth = 1.6;
 
-    // Start with every label hidden.
-    labels.forEach(label => {
-      label.hidden = true;
-    });
-
+    // STEP 1: Collect candidates in the field of view.
     const candidates = [];
 
     entries.forEach((poi, index) => {
       const relative = offsets[index];
 
-      if (!relative || relative.bearing == null) return;
+      if (
+        !relative ||
+        relative.bearing == null ||
+        relative.distance > MAX_DISTANCE_M
+      ) {
+        return;
+      }
 
       const up =
         Number.isFinite(poi.altitude) &&
@@ -128,135 +218,96 @@ export function createOverlay(
       const elevation =
         Math.atan2(up, relative.distance) / RAD;
 
-      const point = camera
-        ? projectPoi(
-            relative.bearing,
-            elevation,
-            camera,
-            ...fieldOfView
-          )
-        : null;
+      const point = projectPoi(
+        relative.bearing,
+        elevation,
+        camera,
+        ...fieldOfView
+      );
 
-      // Only consider POI labels within the configured radius.
-      if (
-        point &&
-        relative.distance <= MAX_LABEL_DISTANCE_M
-      ) {
-        candidates.push({
-          poi,
-          index,
-          point,
-          distance: relative.distance,
-          priority: poi.priority ?? 2
-        });
-      }
+      if (!point) return;
 
-      // Render building models independently of label visibility.
-      const model = getModel(poi);
+      // Primary criterion: physical distance.
+      // Priority and persistence only slightly adjust it.
+      const priority = Number.isFinite(poi.priority)
+        ? poi.priority
+        : 2;
 
-      if (!model || !camera) return;
+      const priorityBonus =
+        priority === 1 ? PRIORITY_BONUS_M : 0;
 
-      const east =
-        Math.sin(relative.bearing * RAD) * relative.distance;
+      const stabilityBonus =
+        previouslyVisible.has(poi.id)
+          ? STABILITY_BONUS_M
+          : 0;
 
-      const north =
-        Math.cos(relative.bearing * RAD) * relative.distance;
+      const score =
+        relative.distance -
+        priorityBonus -
+        stabilityBonus;
 
-      const vertices = model.vertices.map(([x, y, z]) => [
-        east + x,
-        north + y,
-        up + z
-      ]);
-
-      ctx.beginPath();
-
-      for (const [start, end] of model.edges) {
-        const segment = projectEnuEdge(
-          vertices[start],
-          vertices[end],
-          camera,
-          ...fieldOfView
-        );
-
-        if (!segment) continue;
-
-        ctx.moveTo(
-          screenX(segment[0]),
-          screenY(segment[0])
-        );
-
-        ctx.lineTo(
-          screenX(segment[1]),
-          screenY(segment[1])
-        );
-      }
-
-      ctx.stroke();
+      candidates.push({
+        poi,
+        index,
+        relative,
+        up,
+        point,
+        score
+      });
     });
 
-    // Prefer important POIs, then nearer ones.
-    // Already-visible labels receive a small stability bonus.
-    candidates.sort((a, b) => {
-      if (a.priority !== b.priority) {
-        return a.priority - b.priority;
-      }
+    // STEP 2: Sort candidates consistently.
+    candidates.sort((a, b) =>
+      a.score - b.score ||
+      a.relative.distance - b.relative.distance ||
+      String(a.poi.id).localeCompare(String(b.poi.id))
+    );
 
-      const distanceA = a.distance -
-        (previouslyVisible.has(a.poi.id)
-          ? PERSISTENCE_BONUS_M
-          : 0);
-
-      const distanceB = b.distance -
-        (previouslyVisible.has(b.poi.id)
-          ? PERSISTENCE_BONUS_M
-          : 0);
-
-      return distanceA - distanceB;
-    });
-
+    // STEP 3: Select non-overlapping labels.
+    const accepted = [];
     const occupied = [];
-    const nowVisible = new Set();
 
     for (const candidate of candidates) {
-      if (nowVisible.size >= MAX_VISIBLE_LABELS) break;
+      if (accepted.length >= MAX_VISIBLE_POIS) break;
 
       const label = labels[candidate.index];
 
-      // Make visible temporarily to measure its actual size.
+      // Temporarily reveal to measure its dimensions.
       label.hidden = false;
 
       const labelWidth = label.offsetWidth;
       const labelHeight = label.offsetHeight;
 
-      const originalX = screenX(candidate.point);
-      const originalY = screenY(candidate.point);
+      if (
+        !labelWidth ||
+        !labelHeight ||
+        labelWidth + 2 * SCREEN_MARGIN_PX > width ||
+        labelHeight + 2 * SCREEN_MARGIN_PX > height
+      ) {
+        label.hidden = true;
+        continue;
+      }
 
-      // Keep labels inside the viewport.
-      const x = width >= labelWidth + 2 * SCREEN_MARGIN_PX
-        ? clamp(
-            originalX,
-            labelWidth / 2 + SCREEN_MARGIN_PX,
-            width - labelWidth / 2 - SCREEN_MARGIN_PX
-          )
-        : width / 2;
+      const x = clamp(
+        screenX(candidate.point),
+        labelWidth / 2 + SCREEN_MARGIN_PX,
+        width - labelWidth / 2 - SCREEN_MARGIN_PX
+      );
 
-      const y = height >= labelHeight + 2 * SCREEN_MARGIN_PX
-        ? clamp(
-            originalY,
-            SCREEN_MARGIN_PX,
-            height - labelHeight - SCREEN_MARGIN_PX
-          )
-        : Math.max(0, (height - labelHeight) / 2);
+      const y = clamp(
+        screenY(candidate.point),
+        SCREEN_MARGIN_PX,
+        height - labelHeight - SCREEN_MARGIN_PX
+      );
 
-      const rect = {
+      const bounds = {
         left: x - labelWidth / 2,
         right: x + labelWidth / 2,
         top: y,
         bottom: y + labelHeight
       };
 
-      // Suppress labels that overlap an accepted label.
-      if (occupied.some(other => overlaps(rect, other))) {
+      if (occupied.some(rect => overlaps(bounds, rect))) {
         label.hidden = true;
         continue;
       }
@@ -264,10 +315,25 @@ export function createOverlay(
       label.style.left = `${x}px`;
       label.style.top = `${y}px`;
 
-      occupied.push(rect);
-      nowVisible.add(candidate.poi.id);
+      occupied.push(bounds);
+      accepted.push(candidate);
     }
 
-    previouslyVisible = nowVisible;
+    // STEP 4: Render models ONLY for accepted POIs.
+    // A hidden label can never leave a visible model behind.
+    for (const candidate of accepted) {
+      renderModel(
+        candidate,
+        camera,
+        fieldOfView,
+        screenX,
+        screenY
+      );
+    }
+
+    // STEP 5: Remember selected POIs for next frame.
+    previouslyVisible = new Set(
+      accepted.map(candidate => candidate.poi.id)
+    );
   };
 }
