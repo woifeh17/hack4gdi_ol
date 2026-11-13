@@ -231,25 +231,6 @@ function stepSheet(direction) {
   });
 })();
 
-// Three-dot settings menu.
-const menuRoot = $('menu-root');
-function setMenuOpen(open) {
-  $('app-menu').hidden = !open;
-  $('menu-toggle').setAttribute('aria-expanded', String(open));
-  $('menu-toggle').setAttribute('aria-label', open ? 'Einstellungen schließen' : 'Einstellungen öffnen');
-  if (!open) $('developer-options').open = false;
-}
-$('menu-toggle').addEventListener('click', () => setMenuOpen($('app-menu').hidden));
-document.addEventListener('pointerdown', event => {
-  if (!menuRoot.contains(event.target)) setMenuOpen(false);
-});
-document.addEventListener('keydown', event => {
-  if (event.key === 'Escape' && !$('app-menu').hidden) {
-    setMenuOpen(false);
-    $('menu-toggle').focus();
-  }
-});
-
 // ============================================================
 // Geräte: Kamera, Sensoren, GPS.
 // ============================================================
@@ -482,7 +463,6 @@ $('record').addEventListener('click', () => void run(() => {
 }));
 
 function showAtlas(visible) {
-  setMenuOpen(false);
   if (visible) {
     renderDashboard($('dashboard'), atlas.read(), currentPois, openPoi);
     if (camera.active) camera.stop();
