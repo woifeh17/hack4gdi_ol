@@ -8,6 +8,8 @@ import {createPoiDetails} from './data/details.js';
 import {createAtlas} from './atlas/store.js';
 import {renderDashboard} from './atlas/view.js';
 import {createJourneyRecorder} from './journey/recorder.js';
+import {createOSMBuildingsProvider} from './data/providers/osmBuildings.js';
+import {createBuildingStream} from './poi/visibilityManager.js';
 
 const $ = id => document.getElementById(id);
 const announce = text => { $('status').textContent = text; };
@@ -15,7 +17,14 @@ const atlas = createAtlas();
 const recorder = createJourneyRecorder();
 const openPoi = createPoiDetails($('poi-dialog'), id => atlas.collect(id), announce);
 const video = $('camera');
-const renderOverlay = createOverlay($("models"), $("markers"), pois, openPoi, video);
+const buildingProvider = createOSMBuildingsProvider();
+const buildings = createBuildingStream(pois, buildingProvider, {
+  onStatus: ({loaded, loading, errors}) => {
+    $('building-status').textContent = `${loaded} Gebäude geladen${loading ? ` · ${loading} im Abruf` : ''}${errors ? ` · ${errors} ohne abrufbares Modell` : ''}`;
+  },
+});
+const renderOverlay = createOverlay($('models'), $('markers'), pois, openPoi, video,
+  poi => buildings.getModel(poi));
 const camera = createCamera(video, active => {
   video.classList.toggle('active', active);
   $('camera-toggle').textContent = active ? 'Kamera stoppen' : 'Kamera starten';
@@ -109,6 +118,7 @@ function draw() {
   if (!$('scene').hidden) {
     const manual = $('manual').checked ? {heading: value('heading'), pitch: value('pitch')} : null;
     const frame = poses.getFrame({facing: camera.facing, manual});
+    buildings.update(frame);
     $('pose').textContent = frame.camera
       ? `${frame.camera.heading == null ? '—' : Math.round(frame.camera.heading) + '°'} / ${Math.round(frame.camera.pitch)}°`
       : '— / —';
