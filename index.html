@@ -16,9 +16,51 @@
       <button id="explore" aria-pressed="true">Entdecken</button>
       <button id="atlas" aria-pressed="false">Atlas</button>
     </nav>
+    <div class="menu-root" id="menu-root">
+      <button type="button" id="menu-toggle" class="menu-toggle" aria-label="Einstellungen öffnen" aria-controls="app-menu" aria-expanded="false" title="Einstellungen">&#8942;</button>
+      <div id="app-menu" class="app-menu" aria-label="Einstellungen" hidden>
+        <h2>Einstellungen</h2>
+        <label class="menu-check">
+          <input id="show-poi-distance" type="checkbox">
+          <span>Entfernung an POIs anzeigen</span>
+        </label>
+        <h3>Geräte</h3>
+        <div class="device-actions">
+          <button type="button" id="camera-toggle">Kamera aktivieren</button>
+          <button type="button" id="gps">GPS aktivieren</button>
+          <button type="button" id="sensors">Sensoren aktivieren</button>
+          <button type="button" id="switch" disabled>Kamera wechseln</button>
+        </div>
+        <p class="device-status" id="sensor-status" role="status">Sensorstatus wird geprüft.</p>
+        <details id="developer-options" class="developer-options">
+          <summary>Entwickleroptionen · Kalibrierung</summary>
+          <div class="developer-body">
+            <label class="menu-check"><input type="checkbox" id="manual" checked> Manuelle Blickrichtung</label>
+            <div class="settings" id="manual-controls">
+              <label>Azimut <input id="heading" type="range" min="0" max="359" value="203"></label>
+              <label>Neigung <input id="pitch" type="range" min="-89" max="89" value="0"></label>
+            </div>
+            <div class="settings">
+              <label>Horizontales Sichtfeld <input id="hfov" type="range" min="30" max="120" value="65"></label>
+              <label>Vertikales Sichtfeld <input id="vfov" type="range" min="25" max="110" value="55"></label>
+            </div>
+            <form id="calibration" class="calibration-form">
+              <label>Bekannter Azimut (°) <input id="known-heading" type="number" min="0" max="359.9" step="any" value="0" required></label>
+              <button type="submit">Azimut kalibrieren</button>
+              <button type="button" id="zero">Neigung nullen</button>
+              <button type="button" id="reset">Kalibrierung löschen</button>
+            </form>
+          </div>
+        </details>
+      </div>
+    </div>
   </header>
   <main>
-    <p id="status" role="status">Kamera starten oder die Blickrichtung manuell testen.</p>
+    <p id="status" role="status">WindowLens wird gestartet …</p>
+    <div id="permission-banner" class="permission-banner" hidden>
+      <span id="permission-message">Für AR ist eine Berechtigung erforderlich.</span>
+      <button id="enable-ar" type="button" class="primary">AR aktivieren</button>
+    </div>
     <section id="scene" aria-labelledby="scene-title">
       <div class="scene-header">
         <div><h1 id="scene-title">Blick aus dem Zug</h1><p id="position">Mainz · Referenzstandort</p></div>
@@ -31,33 +73,9 @@
       </div>
       <p id="building-status" class="building-status" role="status">0 Gebäude geladen</p>
       <div class="actions">
-        <button id="camera-toggle" class="primary">Kamera starten</button>
-        <button id="gps">GPS aktivieren</button>
-        <button id="record">Fahrt starten</button>
+        <button id="record" class="primary">Fahrt starten</button>
         <output id="recording"></output>
       </div>
-      <details open>
-        <summary>Blickrichtung und Kalibrierung</summary>
-        <div class="actions">
-          <button id="sensors">Sensoren aktivieren</button>
-          <button id="switch" disabled>Kamera wechseln</button>
-          <label><input type="checkbox" id="manual" checked> Manuelle Blickrichtung</label>
-        </div>
-        <div class="settings" id="manual-controls">
-          <label>Azimut <input id="heading" type="range" min="0" max="359" value="203"></label>
-          <label>Neigung <input id="pitch" type="range" min="-89" max="89" value="0"></label>
-        </div>
-        <div class="settings">
-          <label>Horizontales Sichtfeld <input id="hfov" type="range" min="30" max="120" value="65"></label>
-          <label>Vertikales Sichtfeld <input id="vfov" type="range" min="25" max="110" value="55"></label>
-        </div>
-        <form id="calibration" class="actions">
-          <label>Bekannter Azimut <input id="known-heading" type="number" min="0" max="359.9" step="any" value="0" required> °</label>
-          <button>Azimut kalibrieren</button>
-          <button type="button" id="zero">Neigung nullen</button>
-          <button type="button" id="reset">Kalibrierung löschen</button>
-        </form>
-      </details>
       <div id="map-panel"></div>
     </section>
     <section id="dashboard" aria-labelledby="atlas-title" hidden>
