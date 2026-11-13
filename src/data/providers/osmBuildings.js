@@ -10,8 +10,8 @@ import {
 export const DEFAULT_TILE_TEMPLATE = null;
 
 export const OVERPASS_ENDPOINTS = [
-  'https://overpass.private.coffee/api/interpreter',
-  'https://overpass-api.de/api/interpreter'
+  'https://ovp.dresel.systems/api/interpreter',
+  'https://overpass.private.coffee/api/interpreter'
 ];
 
 const RAD = Math.PI / 180;
