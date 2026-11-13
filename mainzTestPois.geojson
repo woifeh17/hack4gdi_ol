@@ -1,0 +1,892 @@
+{
+  "type": "FeatureCollection",
+  "name": "WindowLens Mainz POI anchors",
+  "properties": {
+    "center": {
+      "lat": 49.988163202922046,
+      "lon": 8.227095627612766
+    },
+    "radiusM": 5000
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          8.22443,
+          49.98395
+        ]
+      },
+      "properties": {
+        "id": "arena",
+        "name": "MEWA Arena",
+        "subtitle": "Fußballstadion des 1. FSV Mainz 05",
+        "category": "Sport",
+        "area": "Campus/West",
+        "priority": 1,
+        "source": "https://mapcarta.com/W91231800",
+        "osmRef": "way/91231800",
+        "placeholderModel": "arena",
+        "distanceM": 506
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          8.2266,
+          49.98847
+        ]
+      },
+      "properties": {
+        "id": "hochschule",
+        "name": "Hochschule Mainz · Campus",
+        "subtitle": "Hochschulcampus an der Straßenbahnhaltestelle Hochschule Mainz",
+        "category": "Bildung",
+        "area": "Campus/West",
+        "priority": 1,
+        "source": "https://mapcarta.com/W155183071",
+        "osmRef": "way/155183071",
+        "distanceM": 49
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          8.22961,
+          49.98774
+        ]
+      },
+      "properties": {
+        "id": "aquaedukt",
+        "name": "Römisches Aquädukt · Infotafel",
+        "subtitle": "Infotafel zur römischen Wasserleitung",
+        "category": "Geschichte",
+        "area": "Campus/West",
+        "priority": 2,
+        "source": "https://mapcarta.com/de/N13469955871",
+        "osmRef": "node/13469955871",
+        "distanceM": 186
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          8.23285,
+          49.98563
+        ]
+      },
+      "properties": {
+        "id": "friedhof",
+        "name": "Neuer Jüdischer Friedhof Bretzenheim",
+        "subtitle": "Geschützter Friedhof nahe Hildegard-von-Bingen-Straße",
+        "category": "Geschichte",
+        "area": "Campus/West",
+        "priority": 2,
+        "source": "https://mapcarta.com/de/W275819547",
+        "osmRef": "way/275819547",
+        "distanceM": 499
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          8.22303,
+          49.99437
+        ]
+      },
+      "properties": {
+        "id": "coface",
+        "name": "Coface-See",
+        "subtitle": "See am Kisselberg",
+        "category": "Natur",
+        "area": "Campus/West",
+        "priority": 2,
+        "source": "https://mapcarta.com/W227025898",
+        "osmRef": "way/227025898",
+        "distanceM": 749
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          8.237325,
+          49.992413
+        ]
+      },
+      "properties": {
+        "id": "reaktor",
+        "name": "Forschungsreaktor Mainz",
+        "subtitle": "Forschungsreaktor der Johannes Gutenberg-Universität",
+        "category": "Wissenschaft",
+        "area": "Campus/West",
+        "priority": 2,
+        "source": "https://de.wikipedia.org/wiki/Forschungsreaktor_Mainz",
+        "placeholderModel": "reaktor",
+        "distanceM": 871
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          8.240678,
+          49.990938
+        ]
+      },
+      "properties": {
+        "id": "garten",
+        "name": "Botanischer Garten JGU",
+        "subtitle": "Botanischer Garten der Johannes Gutenberg-Universität",
+        "category": "Natur",
+        "area": "Campus/West",
+        "priority": 1,
+        "source": "https://mainz.de/angebote-entdecken/gruenes-mainz/gruenanlagen_und_parks/botanischer-garten",
+        "distanceM": 1019
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          8.22289,
+          49.96046
+        ]
+      },
+      "properties": {
+        "id": "marienborn",
+        "name": "Bahnhof Mainz-Marienborn",
+        "subtitle": "Regionalbahnhof mit naher Straßenbahnhaltestelle Marienborn/Bahnhof",
+        "category": "Verkehr",
+        "area": "Lerchenberg/Bretzenheim",
+        "priority": 1,
+        "source": "https://mapcarta.com/36298678",
+        "osmRef": "node/452497915",
+        "distanceM": 3095
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          8.23347,
+          49.99028
+        ]
+      },
+      "properties": {
+        "id": "mathematik",
+        "name": "Universität · Mathematik/Informatik",
+        "subtitle": "Institutsgebäude für Mathematik und Informatik",
+        "category": "Wissenschaft",
+        "area": "Campus/West",
+        "priority": 2,
+        "source": "https://mapcarta.com/W24948579",
+        "osmRef": "way/24948579",
+        "building": {
+          "enabled": false,
+          "osmId": "way/24948579",
+          "geometryStatus": "pending-export"
+        },
+        "distanceM": 513
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          8.21359,
+          49.96208
+        ]
+      },
+      "properties": {
+        "id": "zdf-sendezentrum2",
+        "name": "ZDF · Sendezentrum 2",
+        "subtitle": "ZDF-Bürogebäude in der Nähe der Mainzelbahn",
+        "category": "Medien",
+        "area": "Lerchenberg/Bretzenheim",
+        "priority": 2,
+        "source": "https://mapcarta.com/de/W23857004",
+        "osmRef": "way/23857004",
+        "building": {
+          "enabled": false,
+          "osmId": "way/23857004",
+          "geometryStatus": "pending-export"
+        },
+        "distanceM": 3057
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          8.23777,
+          49.99188
+        ]
+      },
+      "properties": {
+        "id": "mpi-chemie",
+        "name": "Max-Planck-Institut für Chemie",
+        "subtitle": "Forschung zu Atmosphärenchemie und Erdsystemprozessen",
+        "category": "Wissenschaft",
+        "area": "Campus/West",
+        "priority": 2,
+        "source": "https://mapcarta.com/W43943711",
+        "osmRef": "way/43943711",
+        "distanceM": 868
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          8.24314,
+          49.99398
+        ]
+      },
+      "properties": {
+        "id": "rew",
+        "name": "Universität · Rechts- und Wirtschaftswissenschaften",
+        "subtitle": "Bereich Rechts- und Wirtschaftswissenschaften",
+        "category": "Bildung",
+        "area": "Campus/West",
+        "priority": 1,
+        "source": "https://mapcarta.com/N2164374075",
+        "osmRef": "node/2164374075",
+        "distanceM": 1317
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          8.24948,
+          49.99477
+        ]
+      },
+      "properties": {
+        "id": "hauptfriedhof",
+        "name": "Hauptfriedhof Mainz",
+        "subtitle": "Historischer Hauptfriedhof, angelegt 1803",
+        "category": "Geschichte",
+        "area": "Universität/Hbf",
+        "priority": 2,
+        "source": "https://mapcarta.com/W19527133",
+        "osmRef": "way/19527133",
+        "distanceM": 1761
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          8.25351,
+          49.99695
+        ]
+      },
+      "properties": {
+        "id": "kath-hochschule",
+        "name": "Katholische Hochschule Mainz",
+        "subtitle": "Hochschule an der Saarstraße",
+        "category": "Bildung",
+        "area": "Universität/Hbf",
+        "priority": 1,
+        "source": "https://mapcarta.com/W479815015",
+        "osmRef": "way/479815015",
+        "distanceM": 2126
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          8.25474,
+          49.99979
+        ]
+      },
+      "properties": {
+        "id": "taubertsbergbad",
+        "name": "Mainzer Taubertsbergbad",
+        "subtitle": "Bade- und Freizeitanlage westlich des Hauptbahnhofs",
+        "category": "Freizeit",
+        "area": "Universität/Hbf",
+        "priority": 1,
+        "source": "https://mapcarta.com/W23578158",
+        "osmRef": "way/23578158",
+        "distanceM": 2361
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          8.25877,
+          50.00141
+        ]
+      },
+      "properties": {
+        "id": "hauptbahnhof",
+        "name": "Mainz Hauptbahnhof",
+        "subtitle": "Historisches Empfangsgebäude des Hauptbahnhofs",
+        "category": "Verkehr",
+        "area": "Universität/Hbf",
+        "priority": 1,
+        "source": "https://mapcarta.com/18094126",
+        "osmRef": "way/187734152",
+        "building": {
+          "enabled": false,
+          "osmId": "way/187734152",
+          "geometryStatus": "pending-export"
+        },
+        "distanceM": 2701
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          8.25936,
+          50.00322
+        ]
+      },
+      "properties": {
+        "id": "bonifazius",
+        "name": "Bonifazius-Türme",
+        "subtitle": "Markante Hochhäuser neben dem Hauptbahnhof",
+        "category": "Architektur",
+        "area": "Universität/Hbf",
+        "priority": 1,
+        "source": "https://mapcarta.com/W1536381261",
+        "osmRef": "way/1536381261",
+        "distanceM": 2850
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          8.26064,
+          50.00352
+        ]
+      },
+      "properties": {
+        "id": "st-bonifaz",
+        "name": "St. Bonifaz",
+        "subtitle": "Katholische Kirche an den Bonifazius-Türmen",
+        "category": "Kirche",
+        "area": "Universität/Hbf",
+        "priority": 1,
+        "source": "https://mapcarta.com/W24164259",
+        "osmRef": "way/24164259",
+        "building": {
+          "enabled": false,
+          "osmId": "way/24164259",
+          "geometryStatus": "pending-export"
+        },
+        "distanceM": 2944
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          8.24559,
+          50.00083
+        ]
+      },
+      "properties": {
+        "id": "bruchweg",
+        "name": "Bruchwegstadion",
+        "subtitle": "Ehemaliges Bundesligastadion des 1. FSV Mainz 05",
+        "category": "Sport",
+        "area": "Universität/Hbf",
+        "priority": 2,
+        "source": "https://mapcarta.com/W1374173989",
+        "osmRef": "way/1374173989",
+        "distanceM": 1932
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          8.21431,
+          49.99774
+        ]
+      },
+      "properties": {
+        "id": "gonsenheim",
+        "name": "Bahnhof Mainz-Gonsenheim",
+        "subtitle": "Regionalbahnhalt an der Strecke Alzey–Mainz",
+        "category": "Verkehr",
+        "area": "Gonsenheim/Nord",
+        "priority": 2,
+        "source": "https://mapcarta.com/de/18094116",
+        "osmRef": "node/5096600671",
+        "placeholderModel": "gonsenheim",
+        "distanceM": 1403
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          8.24148,
+          50.01514
+        ]
+      },
+      "properties": {
+        "id": "alte-lokhalle",
+        "name": "Alte Lokhalle",
+        "subtitle": "Historische Lokhalle im Norden von Mainz",
+        "category": "Industriekultur",
+        "area": "Gonsenheim/Nord",
+        "priority": 1,
+        "source": "https://mapcarta.com/W23596725",
+        "osmRef": "way/23596725",
+        "building": {
+          "enabled": false,
+          "osmId": "way/23596725",
+          "geometryStatus": "pending-export"
+        },
+        "distanceM": 3171
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          8.24639,
+          50.01592
+        ]
+      },
+      "properties": {
+        "id": "schott-b",
+        "name": "SCHOTT · Industriehalle B",
+        "subtitle": "Industriegebäude im SCHOTT-Werksareal",
+        "category": "Industrie",
+        "area": "Gonsenheim/Nord",
+        "priority": 2,
+        "source": "https://mapcarta.com/W57931894",
+        "osmRef": "way/57931894",
+        "building": {
+          "enabled": false,
+          "osmId": "way/57931894",
+          "geometryStatus": "pending-export"
+        },
+        "distanceM": 3380
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          8.20555,
+          49.96281
+        ]
+      },
+      "properties": {
+        "id": "zdf-hochhaus",
+        "name": "ZDF-Hochhaus",
+        "subtitle": "Markantes Verwaltungs- und Redaktionsgebäude am Lerchenberg",
+        "category": "Medien",
+        "area": "Lerchenberg/Bretzenheim",
+        "priority": 1,
+        "source": "https://mapcarta.com/de/W149831364",
+        "osmRef": "way/149831364",
+        "building": {
+          "enabled": false,
+          "osmId": "way/149831364",
+          "geometryStatus": "pending-export"
+        },
+        "distanceM": 3213
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          8.24392,
+          49.98241
+        ]
+      },
+      "properties": {
+        "id": "rathaus-bretzenheim",
+        "name": "Historisches Rathaus Bretzenheim",
+        "subtitle": "Altes Rathaus im Bretzenheimer Ortskern",
+        "category": "Geschichte",
+        "area": "Lerchenberg/Bretzenheim",
+        "priority": 1,
+        "source": "https://mapcarta.com/de/W44316317",
+        "osmRef": "way/44316317",
+        "building": {
+          "enabled": false,
+          "osmId": "way/44316317",
+          "geometryStatus": "pending-export"
+        },
+        "distanceM": 1362
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          8.19397,
+          49.95916
+        ]
+      },
+      "properties": {
+        "id": "buergerhaus-lerchenberg",
+        "name": "Bürgerhäuschen Lerchenberg",
+        "subtitle": "Städtisches Bürgerhäuschen nahe der Straßenbahn-Endhaltestelle",
+        "category": "Kultur",
+        "area": "Lerchenberg/Bretzenheim",
+        "priority": 2,
+        "source": "https://mapcarta.com/W148504606",
+        "osmRef": "way/148504606",
+        "building": {
+          "enabled": false,
+          "osmId": "way/148504606",
+          "geometryStatus": "pending-export"
+        },
+        "distanceM": 4002
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          8.24311,
+          49.98277
+        ]
+      },
+      "properties": {
+        "id": "st-georg-bretzenheim",
+        "name": "St. Georg Bretzenheim",
+        "subtitle": "Historische katholische Pfarrkirche am Ortskern",
+        "category": "Kirche",
+        "area": "Bretzenheim/Ortskern",
+        "priority": 1,
+        "source": "https://mapcarta.com/de/W41815500",
+        "osmRef": "way/41815500",
+        "distanceM": 1293,
+        "buildingCandidate": true
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          8.24293,
+          49.98257
+        ]
+      },
+      "properties": {
+        "id": "dantehaus",
+        "name": "Dantehaus",
+        "subtitle": "Öffentliches Gebäude im historischen Ortskern",
+        "category": "Architektur",
+        "area": "Bretzenheim/Ortskern",
+        "priority": 2,
+        "source": "https://mapcarta.com/de/W240363925",
+        "osmRef": "way/240363925",
+        "distanceM": 1292,
+        "buildingCandidate": true
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          8.24237,
+          49.98343
+        ]
+      },
+      "properties": {
+        "id": "alter-juedischer-friedhof-bretzenheim",
+        "name": "Alter Jüdischer Friedhof Bretzenheim",
+        "subtitle": "Geschützter historischer Friedhof im Ortskern",
+        "category": "Geschichte",
+        "area": "Bretzenheim/Ortskern",
+        "priority": 2,
+        "source": "https://mapcarta.com/W769921840",
+        "osmRef": "way/769921840",
+        "distanceM": 1212,
+        "buildingCandidate": false
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          8.24689,
+          49.98283
+        ]
+      },
+      "properties": {
+        "id": "kapelle-heilige-familie",
+        "name": "Kapelle der Heiligen Familie",
+        "subtitle": "Kapelle an der Bahnstraße nahe der Straßenbahnlinie 52",
+        "category": "Kirche",
+        "area": "Bretzenheim/Bahnstraße",
+        "priority": 1,
+        "source": "https://mapcarta.com/de/W248095019",
+        "osmRef": "way/248095019",
+        "distanceM": 1534,
+        "buildingCandidate": true
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          8.24702,
+          49.98305
+        ]
+      },
+      "properties": {
+        "id": "bischof-stohr-haus",
+        "name": "Bischof-Stohr-Haus",
+        "subtitle": "Bürogebäude an der Bahnstraße, nahe der Tramlinie 52",
+        "category": "Architektur",
+        "area": "Bretzenheim/Bahnstraße",
+        "priority": 1,
+        "source": "https://mapcarta.com/de/W248094915",
+        "osmRef": "way/248094915",
+        "distanceM": 1534,
+        "buildingCandidate": true
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          8.23603,
+          49.98205
+        ]
+      },
+      "properties": {
+        "id": "naturtreff-bretzenheim",
+        "name": "Naturtreff Bretzenheim",
+        "subtitle": "Nachbarschaftsgarten im Bereich Ostergraben",
+        "category": "Natur",
+        "area": "Bretzenheim/West",
+        "priority": 2,
+        "source": "https://mapcarta.com/de/W661128213",
+        "osmRef": "way/661128213",
+        "distanceM": 933,
+        "buildingCandidate": false
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          8.24499,
+          49.97744
+        ]
+      },
+      "properties": {
+        "id": "st-bernhard-bretzenheim",
+        "name": "St. Bernhard",
+        "subtitle": "Kirche an der Hans-Böckler-Straße",
+        "category": "Kirche",
+        "area": "Bretzenheim/Süd",
+        "priority": 1,
+        "source": "https://mapcarta.com/de/W73559934",
+        "osmRef": "way/73559934",
+        "distanceM": 1749,
+        "buildingCandidate": true
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          8.24817,
+          49.97669
+        ]
+      },
+      "properties": {
+        "id": "igs-bretzenheim",
+        "name": "IGS Mainz-Bretzenheim",
+        "subtitle": "Integrierte Gesamtschule Mainz-Bretzenheim",
+        "category": "Bildung",
+        "area": "Bretzenheim/Süd",
+        "priority": 2,
+        "source": "https://mapcarta.com/de/W41814875",
+        "osmRef": "way/41814875",
+        "distanceM": 1974,
+        "buildingCandidate": false
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          8.253,
+          49.97491
+        ]
+      },
+      "properties": {
+        "id": "alte-ziegelei-bretzenheim",
+        "name": "Alte Ziegelei Bretzenheim",
+        "subtitle": "Historischer Industriekomplex und Ziegelmuseum",
+        "category": "Industriekultur",
+        "area": "Bretzenheim/Süd",
+        "priority": 1,
+        "source": "https://mapcarta.com/de/W24006984",
+        "osmRef": "way/24006984",
+        "distanceM": 2367,
+        "buildingCandidate": false
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          8.22824,
+          49.96744
+        ]
+      },
+      "properties": {
+        "id": "gutenberg-center",
+        "name": "Gutenberg-Center",
+        "subtitle": "Großes Einkaufszentrum südlich von Bretzenheim",
+        "category": "Handel",
+        "area": "Bretzenheim/Südwest",
+        "priority": 2,
+        "source": "https://mapcarta.com/de/W23529426",
+        "osmRef": "way/23529426",
+        "distanceM": 2306,
+        "buildingCandidate": true
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          8.25272,
+          49.98495
+        ]
+      },
+      "properties": {
+        "id": "naturschaugarten-lindenmuehle",
+        "name": "Naturschaugarten Lindenmühle",
+        "subtitle": "Naturnaher Schaugarten direkt an der Linie 52",
+        "category": "Natur",
+        "area": "Bretzenheim/Linie 52",
+        "priority": 1,
+        "source": "https://mapcarta.com/de/W97202985",
+        "osmRef": "way/97202985",
+        "distanceM": 1867,
+        "buildingCandidate": false
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          8.25378,
+          49.98559
+        ]
+      },
+      "properties": {
+        "id": "tv-mainz-zahlbach",
+        "name": "TV Mainz Zahlbach 1862",
+        "subtitle": "Sportanlage nahe der Haltestelle Naturschaugarten",
+        "category": "Sport",
+        "area": "Zahlbach/Linie 52",
+        "priority": 2,
+        "source": "https://mapcarta.com/de/W1074469328",
+        "osmRef": "way/1074469328",
+        "distanceM": 1929,
+        "buildingCandidate": false
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          8.25321,
+          49.98863
+        ]
+      },
+      "properties": {
+        "id": "st-achatius-zahlbach",
+        "name": "St. Achatius Zahlbach",
+        "subtitle": "Historische Kirche im Zahlbachtal nahe Linie 52",
+        "category": "Kirche",
+        "area": "Zahlbach/Linie 52",
+        "priority": 1,
+        "source": "https://mapcarta.com/de/W217274259",
+        "osmRef": "way/217274259",
+        "distanceM": 1868,
+        "buildingCandidate": true
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          8.25869,
+          49.9863
+        ]
+      },
+      "properties": {
+        "id": "melanchthonkirche",
+        "name": "Melanchthonkirche",
+        "subtitle": "Evangelische Kirche an der Beuthener Straße",
+        "category": "Kirche",
+        "area": "Oberstadt/Linie 52",
+        "priority": 2,
+        "source": "https://mapcarta.com/de/W24461241",
+        "osmRef": "way/24461241",
+        "distanceM": 2268,
+        "buildingCandidate": true
+      }
+    }
+  ]
+}
