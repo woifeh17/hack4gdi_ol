@@ -1,12 +1,11 @@
 import {distanceAndBearing, projectPoi} from './geometry.js';
-import {projectEnuEdge} from './buildingGeometry.js';
+import {drawShadedBuildings} from './shadedBuildings.js';
+import {MAX_POI_DISTANCE_M as MAX_DISTANCE_M, MAX_VISIBLE_POIS} from './visibilityConfig.js';
 import {formatPoiDistance} from './formatDistance.js';
 
 const RAD = Math.PI / 180;
 
 // Preserve the current expanded AR visibility settings.
-const MAX_DISTANCE_M = 1500;
-const MAX_VISIBLE_POIS = 8;
 const COLLISION_GAP_PX = 10;
 const SCREEN_MARGIN_PX = 6;
 const PRIORITY_BONUS_M = 45;
@@ -53,30 +52,6 @@ export function createOverlay(
   let lastPosition = null;
   let offsets = [];
   let previouslyVisible = new Set();
-
-  function renderModel(candidate, camera, fieldOfView, screenX, screenY) {
-    const {poi, relative, up} = candidate;
-    const model = getModel(poi);
-    if (!model?.vertices?.length || !model?.edges?.length) return;
-
-    const east = Math.sin(relative.bearing * RAD) * relative.distance;
-    const north = Math.cos(relative.bearing * RAD) * relative.distance;
-    const vertices = model.vertices.map(([x, y, z]) => [east + x, north + y, up + z]);
-
-    ctx.beginPath();
-    let drawnEdges = 0;
-    for (const [start, end] of model.edges) {
-      const a = vertices[start];
-      const b = vertices[end];
-      if (!a || !b) continue;
-      const segment = projectEnuEdge(a, b, camera, ...fieldOfView);
-      if (!segment) continue;
-      ctx.moveTo(screenX(segment[0]), screenY(segment[0]));
-      ctx.lineTo(screenX(segment[1]), screenY(segment[1]));
-      drawnEdges++;
-    }
-    if (drawnEdges) ctx.stroke();
-  }
 
   return ({position, camera}, fieldOfView) => {
     const width = canvas.clientWidth;
@@ -176,10 +151,9 @@ export function createOverlay(
       accepted.push(candidate);
     }
 
-    // One visibility decision for a label AND its building model.
-    for (const candidate of accepted) {
-      renderModel(candidate, camera, fieldOfView, screenX, screenY);
-    }
+    // All accepted POIs share the same label/model visibility decision.
+    // Faces are sorted and shaded together, rather than in arbitrary POI order.
+    drawShadedBuildings(ctx, accepted, camera, fieldOfView, screenX, screenY, getModel);
     previouslyVisible = new Set(accepted.map(candidate => candidate.poi.id));
   };
 }
