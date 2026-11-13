@@ -36,6 +36,8 @@ const openPoi = createPoiDetails(
 );
 
 const video = $('camera');
+const stage = $('scene-stage');
+const sheet = $('sheet');
 
 // Leaflet-Karte mit dem neuen POI-Katalog
 const mapPanel = createMapPanel($('map-panel'), {
@@ -82,16 +84,168 @@ const buildings = createBuildingStream(
   }
 );
 
-// AR-Overlay – Video und Canvas füllen die Vollbild-Bühne,
-// alle Größenberechnungen laufen automatisch auf 100vw/100vh.
-const renderOverlay = createOverlay(
-  $('models'),
-  $('markers'),
-  currentPois,
-  openPoi,
-  video,
-  poi => buildings.getModel(poi)
-);
+// Theme-Schalter: initialen ARIA-Zustand mit dem
+// tatsächlich geladenen Theme synchronisieren.
+(() => {
+  const toggle = $('theme-toggle');
+  const light = document.documentElement.dataset.theme === 'light';
+  toggle.setAttribute('aria-checked', String(light));
+  toggle.setAttribute(
+    'aria-label',
+    light ? 'Dunkles Design aktivieren' : 'Helles Design aktivieren'
+  );
+})();
+
+// ============================================================
+// Bottom-Sheet im Apple-Maps-Stil
+// Drei Zustände: peek (angedeutet), half (halb), full (maximiert).
+// Ziehen am Grabber, Tippen auf Grabber und Tastatur wechseln
+// zwischen den Zuständen.
+// ============================================================
+const SHEET_STATES = ['peek', 'half', 'full'];
+let sheetState = 'peek';
+let sheetTimer = null;
+
+function resizeMapAfterSheetChange() {
+  // Leaflet-Karte hängt im Sheet-Body: Nach jeder
+  // Größenänderung neu messen lassen, sonst bleiben
+  // Kacheln leer oder verschieben sich.
+  window.clearTimeout(sheetTimer);
+  sheetTimer = window.setTimeout(
+    () => mapPanel.invalidate(),
+    500
+  );
+}
+
+function setSheetState(state) {
+  sheetState = state;
+  sheet.className = `sheet sheet--${state}`;
+  resizeMapAfterSheetChange();
+}
+
+function stepSheet(direction) {
+  const index = Math.min(
+    SHEET_STATES.length - 1,
+    Math.max(0, SHEET_STATES.indexOf(sheetState) + direction)
+  );
+  setSheetState(SHEET_STATES[index]);
+}
+
+(() => {
+  const grabber = $('sheet-grabber');
+  let startY = 0;
+  let startTravel = 0;
+  let dragging = false;
+
+  const currentTravel = () =>
+    window.innerHeight - sheet.getBoundingClientRect().top;
+
+  grabber.addEventListener('pointerdown', event => {
+    dragging = true;
+    startY = event.clientY;
+    startTravel = currentTravel();
+    sheet.classList.add('dragging');
+    grabber.setPointerCapture(event.pointerId);
+    event.preventDefault();
+  });
+
+  grabber.addEventListener('pointermove', event => {
+    if (!dragging) return;
+    const delta = startY - event.clientY;
+    sheet.style.transform =
+      `translate(-50%, calc(100% - ${Math.max(40, startTravel + delta)}px))`;
+  });
+
+  grabber.addEventListener('pointerup', event => {
+    if (!dragging) return;
+    const delta = startY - event.clientY;
+    dragging = false;
+    sheet.classList.remove('dragging');
+    sheet.style.transform = '';
+    const threshold = 40;
+
+    if (delta > threshold) {
+      stepSheet(1);            // nach oben gezogen
+    } else if (delta < -threshold) {
+      stepSheet(-1);           // nach unten gezogen
+    } else {
+      // Antippen: zwischen peek und full umschalten
+      setSheetState(sheetState === 'peek' ? 'full' : 'peek');
+    }
+  });
+
+  grabber.addEventListener('pointercancel', () => {
+    if (!dragging) return;
+    dragging = false;
+    sheet.classList.remove('dragging');
+    sheet.style.transform = '';
+  });
+
+  // Tastaturbedienung
+  grabber.addEventListener('keydown', event => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      setSheetState(sheetState === 'peek' ? 'full' : 'peek');
+    } else if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      stepSheet(1);
+    } else if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      stepSheet(-1);
+    }
+  });
+})();
+
+// Three-dot settings menu.
+const menuRoot = $('menu-root');
+function setMenuOpen(open) {
+  $('app-menu').hidden = !open;
+  $('menu-toggle').setAttribute('aria-expanded', String(open));
+  $('menu-toggle').setAttribute('aria-label', open ? 'Einstellungen schließen' : 'Einstellungen öffnen');
+  if (!open) $('developer-options').open = false;
+}
+$('menu-toggle').addEventListener('click', () => setMenuOpen($('app-menu').hidden));
+document.addEventListener('pointerdown', event => {
+  if (!menuRoot.contains(event.target)) setMenuOpen(false);
+});
+document.addEventListener('keydown', event => {
+  if (event.key === 'Escape' && !$('app-menu').hidden) {
+    setMenuOpen(false);
+    $('menu-toggle').focus();
+  }
+});
+
+let cameraRetryNeeded = false;
+let gpsRetryNeeded = false;
+let sensorNeedsGesture = false;
+let sensorStatus = 'Nicht gestartet';
+let cameraBusy = false;
+let cameraWanted = true;
+let autoSwitchToSensors = true;
+
+function syncControls() {
+  $('camera-toggle').textContent = camera.active ? 'Kamera stoppen' : 'Kamera aktivieren';
+  $('camera-toggle').disabled = cameraBusy;
+  $('switch').disabled = !camera.active || cameraBusy;
+  $('gps').textContent = position.active ? 'GPS stoppen' : 'GPS aktivieren';
+  $('sensors').textContent = orientation.active ? 'Sensoren stoppen' : 'Sensoren aktivieren';
+  $('sensor-status').textContent = sensorStatus;
+}
+
+function updatePermissionBanner() {
+  const needsAction = sensorNeedsGesture || cameraRetryNeeded || gpsRetryNeeded;
+  $('permission-banner').hidden = !needsAction;
+  if (!needsAction) return;
+
+  const needs = [
+    ...(sensorNeedsGesture ? ['Bewegungssensoren'] : []),
+    ...(cameraRetryNeeded ? ['Kamera'] : []),
+    ...(gpsRetryNeeded ? ['Standort'] : []),
+  ];
+  $('permission-message').textContent =
+    `Für ${needs.join(', ')} ist eine Freigabe oder ein erneuter Start erforderlich.`;
+  $('enable-ar').textContent = 'AR aktivieren';
+}
 
 // Kamera
 const camera = createCamera(video, active => {
@@ -365,15 +519,17 @@ function showAtlas(visible) {
       camera.stop();
     }
   }
-
-  // #scene enthält HUD und Sheet: beide verschwinden
-  // im Atlas, das Dashboard liegt auf dem normalen Hintergrund.
+  stage.hidden = visible;
   $('scene').hidden = visible;
   $('dashboard').hidden = !visible;
   stage.hidden = visible;
 
   $('explore').setAttribute('aria-pressed', String(!visible));
   $('atlas').setAttribute('aria-pressed', String(visible));
+  // Restore the camera when returning to AR, unless the user disabled it.
+  if (!visible && cameraWanted && !camera.active && !cameraBusy) void startCamera();
+  syncControls();
+  if (!visible) resizeMapAfterSheetChange();
 }
 
 $('atlas').onclick = () => run(() => showAtlas(true));
@@ -426,3 +582,11 @@ window.addEventListener('pagehide', () => {
   $('sensors').disabled = false;
   position.stop();
 });
+
+// Automatic startup: camera, geolocation and (where allowed) sensors.
+// Browsers can still prompt or deny access; the banner offers a retry.
+syncControls();
+startGps();
+void startCamera();
+void startSensors(false);
+

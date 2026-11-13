@@ -268,5 +268,105 @@ export async function loadPois() {
   }
 }
 
+<<<<<<< HEAD
 // Default Export fuer direkte Kompatibilitaet - als Promise
 export const pois = loadPois();
+=======
+async function loadPoisWithRetry(position, maxRetries = 3, delayMs = 1000) {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    const pois = await loadPois(position);
+    if (pois.length > 0) {
+      return pois;
+    }
+    if (attempt < maxRetries) {
+      await new Promise(resolve => setTimeout(resolve, delayMs));
+    }
+  }
+  return [];
+}
+
+export async function loadPoisForCurrentPosition(positionProvider) {
+  if (!positionProvider || !positionProvider.current) {
+    console.error("Invalid position provider");
+    return [];
+  }
+  
+  return loadPoisWithRetry(positionProvider.current);
+}
+
+export const fallbackPois = [
+  {id:'arena', model:boxModel(165, 190, 28), building:{enabled:true, searchRadiusM:240, defaultHeight:28}, name:'MEWA Arena', lat:49.983956, lon:8.224387, subtitle:'Fußballstadion · 1. FSV Mainz 05', source:'https://www.outdooractive.com/de/poi/rheinhessen/mewa-arena/25271942/'},
+  {id:'garten', name:'Botanischer Garten JGU', lat:49.990938, lon:8.240678, subtitle:'Botanischer Garten · Universität Mainz', source:'https://www.outdooractive.com/de/poi/rheinhessen/botanischer-garten-der-johannes-gutenberg-universitaet-mainz/12023487/'},
+  {id:'aquaedukt', name:'Römisches Aquädukt · Infotafel', lat:49.98774, lon:8.22961, subtitle:'Informationstafel zur römischen Wasserleitung', source:'https://mapcarta.com/de/N13469955871'},
+  {id:'friedhof', name:'Neuer Jüdischer Friedhof', lat:49.98563, lon:8.23285, subtitle:'Geschütztes Kulturdenkmal · Mainz-Bretzenheim', source:'https://mapcarta.com/de/W275819547'},
+  {id:'coface', name:'Coface-See', lat:49.99437, lon:8.22303, subtitle:'Wasserfläche · Kisselberg', source:'https://mapcarta.com/W227025898'},
+  {id:'reaktor', model:boxModel(30, 30, 16), building:{enabled:true, searchRadiusM:100, defaultHeight:16}, name:'Forschungsreaktor Mainz', lat:49.992413, lon:8.237325, subtitle:'Forschungseinrichtung · Johannes Gutenberg-Universität', source:'https://de.wikipedia.org/wiki/Forschungsreaktor_Mainz'},
+  {id:'gonsenheim', model:boxModel(18, 9, 7), building:{enabled:true, searchRadiusM:75, defaultHeight:7}, name:'Bahnhof Mainz-Gonsenheim', lat:49.99774, lon:8.21431, subtitle:'Regionalbahnhalt · Mainz-Gonsenheim', source:'https://mapcarta.com/de/18094116'},
+];
+
+export const pois = fallbackPois;
+
+export function createPoiLoader(positionProvider, options = {}) {
+  const {
+    onUpdate = () => {},
+    minIntervalMs = 5000,
+    minDistanceM = 100,
+  } = options;
+  
+  let lastPois = [...fallbackPois];
+  let lastPosition = null;
+  let lastUpdate = 0;
+  let isLoading = false;
+  let loadPromise = null;
+  
+  function shouldUpdate(newPosition) {
+    if (!newPosition || !newPosition.lat || !newPosition.lon) return false;
+    
+    if (!lastPosition) return true;
+    
+    const now = Date.now();
+    if (now - lastUpdate < minIntervalMs) return false;
+    
+    const distance = haversineDistance(
+      lastPosition.lat, lastPosition.lon,
+      newPosition.lat, newPosition.lon
+    );
+    
+    return distance >= minDistanceM;
+  }
+  
+  async function loadAndUpdate(newPosition) {
+    if (isLoading) return loadPromise;
+    if (!shouldUpdate(newPosition)) return lastPois;
+    
+    isLoading = true;
+    lastPosition = {...newPosition};
+    
+    loadPromise = loadPoisWithRetry(newPosition).then(newPois => {
+      lastPois = newPois.length > 0 ? newPois : [...fallbackPois];
+      lastUpdate = Date.now();
+      isLoading = false;
+      loadPromise = null;
+      onUpdate(lastPois, newPosition);
+      return lastPois;
+    }).catch(error => {
+      console.error("Failed to load POIs:", error);
+      isLoading = false;
+      loadPromise = null;
+      return lastPois;
+    });
+    
+    return loadPromise;
+  }
+  
+  return {
+    get current() { return lastPois; },
+    get loading() { return isLoading; },
+    update: loadAndUpdate,
+    refresh: () => {
+      if (!positionProvider || !positionProvider.current) return Promise.resolve(lastPois);
+      return loadAndUpdate(positionProvider.current);
+    },
+  };
+}
+>>>>>>> c330c53 (fix sk's breaking LiquidGlass changes)
