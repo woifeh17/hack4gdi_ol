@@ -33,17 +33,3 @@ Die drei Drahtgitter sind geschätzte LOD1-Platzhalter. Das Modellformat verwend
 Die Details zeigen aktuell Beschreibung, Koordinaten und Quelle. Die Galerie liest optionale Einträge `photos: [{url, alt, credit}]` aus dem Katalog. Bilddateien und Nutzungsnachweise können pro POI ergänzt werden.
 
 Der Atlas speichert POI-IDs und abgeschlossene Fahrten im Browser. Für eine Fahrt zählen aufeinanderfolgende verwertbare Standortfixes. Signalunterbrechungen und unplausible Sprünge beginnen ein neues Segment, der Mainz-Fallback zählt nie. Die Kilometer sind GPS-Schätzwerte ohne Zuordnung zum Schienennetz. Die App erfasst Fahrten im Vordergrund. Der Atlas bleibt an Browser und Website gebunden.
-
-## Neues GitHub-Repository
-
-Das ZIP entpacken und ein leeres Repository auf GitHub anlegen. Für einen Upload über Git im Projektordner ausführen, wobei `OWNER/REPO` durch das neue Repository ersetzt wird:
-
-```sh
-git init -b main
-git add .
-git commit -m "Initialize WindowLens rail atlas"
-git remote add origin https://github.com/OWNER/REPO.git
-git push -u origin main
-```
-
-Beim Upload über die GitHub-Oberfläche gehören `index.html`, `style.css` und der Ordner `src` direkt ins Repository-Stammverzeichnis. Die übrigen Dateien dokumentieren und testen das Projekt.
