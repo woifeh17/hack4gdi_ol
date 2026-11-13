@@ -1,4 +1,3 @@
-
 import {createCamera} from './device/camera.js';
 import {createOrientation} from './device/orientation.js';
 import {createPosition} from './device/position.js';
@@ -22,6 +21,10 @@ const announce = text => {
 const currentPois = pois;
 
 console.log(`WindowLens: ${currentPois.length} POIs geladen`);
+
+// Vollbild-Kamerabühne und Bottom-Sheet
+const stage = $('scene-stage');
+const sheet = $('sheet');
 
 const atlas = createAtlas();
 const recorder = createJourneyRecorder();
@@ -64,8 +67,6 @@ fetch('./src/data/rail.geojson')
   });
 
 // Gebäudestreaming
-// Aktuell haben die meisten neuen POIs noch keine
-// aktivierten Gebäudegeometrien.
 const buildingProvider = createOSMBuildingsProvider();
 
 const buildings = createBuildingStream(
@@ -81,7 +82,8 @@ const buildings = createBuildingStream(
   }
 );
 
-// AR-Overlay – nur eine einzige Instanz
+// AR-Overlay – Video und Canvas füllen die Vollbild-Bühne,
+// alle Größenberechnungen laufen automatisch auf 100vw/100vh.
 const renderOverlay = createOverlay(
   $('models'),
   $('markers'),
@@ -136,6 +138,118 @@ const run = async action => {
     announce(error.message);
   }
 };
+
+// Theme-Schalter: initialen ARIA-Zustand mit dem
+// tatsächlich geladenen Theme synchronisieren.
+(() => {
+  const toggle = $('theme-toggle');
+  const light = document.documentElement.dataset.theme === 'light';
+  toggle.setAttribute('aria-checked', String(light));
+  toggle.setAttribute(
+    'aria-label',
+    light ? 'Dunkles Design aktivieren' : 'Helles Design aktivieren'
+  );
+})();
+
+// ============================================================
+// Bottom-Sheet im Apple-Maps-Stil
+// Drei Zustände: peek (angedeutet), half (halb), full (maximiert).
+// Ziehen am Grabber, Tippen auf Grabber und Tastatur wechseln
+// zwischen den Zuständen.
+// ============================================================
+const SHEET_STATES = ['peek', 'half', 'full'];
+let sheetState = 'peek';
+let sheetTimer = null;
+
+function resizeMapAfterSheetChange() {
+  // Leaflet-Karte hängt im Sheet-Body: Nach jeder
+  // Größenänderung neu messen lassen, sonst bleiben
+  // Kacheln leer oder verschieben sich.
+  window.clearTimeout(sheetTimer);
+  sheetTimer = window.setTimeout(
+    () => window.dispatchEvent(new Event('resize')),
+    500
+  );
+}
+
+function setSheetState(state) {
+  sheetState = state;
+  sheet.className = `sheet sheet--${state}`;
+  resizeMapAfterSheetChange();
+}
+
+function stepSheet(direction) {
+  const index = Math.min(
+    SHEET_STATES.length - 1,
+    Math.max(0, SHEET_STATES.indexOf(sheetState) + direction)
+  );
+  setSheetState(SHEET_STATES[index]);
+}
+
+(() => {
+  const grabber = $('sheet-grabber');
+  let startY = 0;
+  let startTravel = 0;
+  let dragging = false;
+
+  const currentTravel = () =>
+    window.innerHeight - sheet.getBoundingClientRect().top;
+
+  grabber.addEventListener('pointerdown', event => {
+    dragging = true;
+    startY = event.clientY;
+    startTravel = currentTravel();
+    sheet.classList.add('dragging');
+    grabber.setPointerCapture(event.pointerId);
+    event.preventDefault();
+  });
+
+  grabber.addEventListener('pointermove', event => {
+    if (!dragging) return;
+    const delta = startY - event.clientY;
+    sheet.style.transform =
+      `translate(-50%, calc(100% - ${Math.max(40, startTravel + delta)}px))`;
+  });
+
+  grabber.addEventListener('pointerup', event => {
+    if (!dragging) return;
+    const delta = startY - event.clientY;
+    dragging = false;
+    sheet.classList.remove('dragging');
+    sheet.style.transform = '';
+    const threshold = 40;
+
+    if (delta > threshold) {
+      stepSheet(1);            // nach oben gezogen
+    } else if (delta < -threshold) {
+      stepSheet(-1);           // nach unten gezogen
+    } else {
+      // Antippen: zwischen peek und full umschalten
+      setSheetState(sheetState === 'peek' ? 'full' : 'peek');
+    }
+  });
+
+  grabber.addEventListener('pointercancel', () => {
+    if (!dragging) return;
+    dragging = false;
+    sheet.classList.remove('dragging');
+    sheet.style.transform = '';
+  });
+
+  // Tastaturbedienung
+  grabber.addEventListener('keydown', event => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      setSheetState(sheetState === 'peek' ? 'full' : 'peek');
+    } else if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      stepSheet(1);
+    } else if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      stepSheet(-1);
+    }
+  });
+})();
 
 // Kamerasteuerung
 async function startCamera(facing) {
@@ -237,7 +351,7 @@ $('record').onclick = () => run(() => {
     recorder.current ? 'Fahrt beenden' : 'Fahrt starten';
 });
 
-// Ansichten
+// Ansichten: Entdecken (Vollbild-Kamera + Sheet) ↔ Atlas
 function showAtlas(visible) {
   if (visible) {
     renderDashboard(
@@ -252,8 +366,11 @@ function showAtlas(visible) {
     }
   }
 
+  // #scene enthält HUD und Sheet: beide verschwinden
+  // im Atlas, das Dashboard liegt auf dem normalen Hintergrund.
   $('scene').hidden = visible;
   $('dashboard').hidden = !visible;
+  stage.hidden = visible;
 
   $('explore').setAttribute('aria-pressed', String(!visible));
   $('atlas').setAttribute('aria-pressed', String(visible));
