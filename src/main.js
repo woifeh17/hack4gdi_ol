@@ -34,12 +34,12 @@ const mapPanel = window.L ? createMapPanel($('map-panel'), {
   onRouteRequest: (from, to) => {
     console.log('Route angefragt:', from.properties.Bezeichnung, '→', to.properties.Bezeichnung);
   },
-}) : null
+}) : null;
 
 // Sicherstellen, dass alle POIs auf der Karte liegen.
-mapPanel.setPois(currentPois);
-
 if (mapPanel) {
+  mapPanel.setPois(currentPois);
+
   fetch('./src/data/rail.geojson')
     .then(response => {
       if (!response.ok) throw new Error(`Schienennetz: HTTP ${response.status}`);
@@ -49,54 +49,27 @@ if (mapPanel) {
       color: '#475569', weight: 2, opacity: 0.8,
     }))
     .catch(error => console.warn('Schienennetz konnte nicht geladen werden:', error));
+
+  fetch('./src/data/stations.geojson')
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`Bahnhöfe: HTTP ${response.status}`);
+      }
+      return response.json();
+    })
+    .then(data => {
+      mapPanel.addStations(data);
+    })
+    .catch(error => {
+      console.warn('Bahnhöfe konnten nicht geladen werden:', error);
+    });
 } else {
   $('map-panel').textContent = 'Karte derzeit nicht verfügbar.';
 }
-  fetch('./src/data/stations.geojson')
-  .then(response => {
-    if (!response.ok) {
-      throw new Error(`Bahnhöfe: HTTP ${response.status}`);
-    }
-    return response.json();
-  })
-  .then(data => {
-    mapPanel.addStations(data);
-  })
-  .catch(error => {
-    console.warn('Bahnhöfe konnten nicht geladen werden:', error);
-  });
 
-// Kamera
-const camera = createCamera(video, active => {
-  video.classList.toggle('active', active);
-  $('camera-toggle').textContent =
-    active ? 'Kamera stoppen' : 'Kamera starten';
-  $('switch').disabled = !active;
-});
-
-const orientation = createOrientation(announce);
-
-// Position und Fahrtaufzeichnung
-let mapCentered = false;
-
-function handlePositionUpdate(fix, status) {
-  $('position').textContent =
-    fix.source === 'gps'
-      ? status
-      : 'Mainz · Referenzstandort';
-
-  $('gps').textContent =
-    position.active ? 'GPS beenden' : 'GPS aktivieren';
-
-  recorder.sample(fix);
-
-  if (fix.source === 'gps' && !mapCentered) {
-    mapPanel.setView(fix.lat, fix.lon);
-    mapCentered = true;
-  }
-
-  announce(status);
-
+// ============================================================
+// Gebäudestreaming: LoD2 mit OSM-Fallback.
+// ============================================================
 const buildingProvider = createLod2BuildingProvider(createLocalBuildingProvider());
 const buildings = createBuildingStream(currentPois, buildingProvider, {
   onStatus: ({loaded, loading, errors}) => {
@@ -138,6 +111,7 @@ $('show-poi-distance').addEventListener('change', () => {
   } catch { /* Preference remains active for this session. */ }
 });
 
+// AR-Overlay – nur eine einzige Instanz
 const renderOverlay = createOverlay(
   $('models'), $('markers'), currentPois, openPoi, video,
   poi => buildings.getModel(poi),
@@ -276,6 +250,9 @@ document.addEventListener('keydown', event => {
   }
 });
 
+// ============================================================
+// Geräte: Kamera, Sensoren, GPS.
+// ============================================================
 let cameraRetryNeeded = false;
 let gpsRetryNeeded = false;
 let sensorNeedsGesture = false;
@@ -562,4 +539,3 @@ syncControls();
 startGps();
 void startCamera();
 void startSensors(false);
-}
