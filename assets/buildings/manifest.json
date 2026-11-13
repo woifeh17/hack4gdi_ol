@@ -1,5 +1,91 @@
 {
   "source": "OpenStreetMap contributors / Geofabrik Rheinland-Pfalz extract",
   "license": "ODbL-1.0",
-  "buildings": {}
+  "buildings": {
+    "gutenberg-center": {
+      "file": "gutenberg-center.geojson",
+      "osmId": "way/23529426",
+      "defaultHeight": 12
+    },
+    "alte-lokhalle": {
+      "file": "alte-lokhalle.geojson",
+      "osmId": "way/23596725",
+      "defaultHeight": 16
+    },
+    "zdf-sendezentrum2": {
+      "file": "zdf-sendezentrum2.geojson",
+      "osmId": "way/23857004",
+      "defaultHeight": 20
+    },
+    "st-bonifaz": {
+      "file": "st-bonifaz.geojson",
+      "osmId": "way/24164259",
+      "defaultHeight": 18
+    },
+    "melanchthonkirche": {
+      "file": "melanchthonkirche.geojson",
+      "osmId": "way/24461241",
+      "defaultHeight": 16
+    },
+    "mathematik": {
+      "file": "mathematik.geojson",
+      "osmId": "way/24948579",
+      "defaultHeight": 12
+    },
+    "st-georg-bretzenheim": {
+      "file": "st-georg-bretzenheim.geojson",
+      "osmId": "way/41815500",
+      "defaultHeight": 18
+    },
+    "rathaus-bretzenheim": {
+      "file": "rathaus-bretzenheim.geojson",
+      "osmId": "way/44316317",
+      "defaultHeight": 12
+    },
+    "schott-b": {
+      "file": "schott-b.geojson",
+      "osmId": "way/57931894",
+      "defaultHeight": 15
+    },
+    "st-bernhard-bretzenheim": {
+      "file": "st-bernhard-bretzenheim.geojson",
+      "osmId": "way/73559934",
+      "defaultHeight": 17
+    },
+    "buergerhaus-lerchenberg": {
+      "file": "buergerhaus-lerchenberg.geojson",
+      "osmId": "way/148504606",
+      "defaultHeight": 12
+    },
+    "zdf-hochhaus": {
+      "file": "zdf-hochhaus.geojson",
+      "osmId": "way/149831364",
+      "defaultHeight": 38
+    },
+    "hauptbahnhof": {
+      "file": "hauptbahnhof.geojson",
+      "osmId": "way/187734152",
+      "defaultHeight": 12
+    },
+    "st-achatius-zahlbach": {
+      "file": "st-achatius-zahlbach.geojson",
+      "osmId": "way/217274259",
+      "defaultHeight": 18
+    },
+    "dantehaus": {
+      "file": "dantehaus.geojson",
+      "osmId": "way/240363925",
+      "defaultHeight": 12
+    },
+    "bischof-stohr-haus": {
+      "file": "bischof-stohr-haus.geojson",
+      "osmId": "way/248094915",
+      "defaultHeight": 12
+    },
+    "kapelle-heilige-familie": {
+      "file": "kapelle-heilige-familie.geojson",
+      "osmId": "way/248095019",
+      "defaultHeight": 12
+    }
+  }
 }
