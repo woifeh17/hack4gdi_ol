@@ -231,24 +231,10 @@ function stepSheet(direction) {
   });
 })();
 
-// Three-dot settings menu.
-const menuRoot = $('menu-root');
-function setMenuOpen(open) {
-  $('app-menu').hidden = !open;
-  $('menu-toggle').setAttribute('aria-expanded', String(open));
-  $('menu-toggle').setAttribute('aria-label', open ? 'Einstellungen schließen' : 'Einstellungen öffnen');
-  if (!open) $('developer-options').open = false;
-}
-$('menu-toggle').addEventListener('click', () => setMenuOpen($('app-menu').hidden));
-document.addEventListener('pointerdown', event => {
-  if (!menuRoot.contains(event.target)) setMenuOpen(false);
-});
-document.addEventListener('keydown', event => {
-  if (event.key === 'Escape' && !$('app-menu').hidden) {
-    setMenuOpen(false);
-    $('menu-toggle').focus();
-  }
-});
+// Das Drei-Punkte-Menü wurde mit dem UI-Redesign aus index.html entfernt;
+// die Einstellungen liegen jetzt direkt im Sheet. Der alte Menü-Code hier
+// griff weiterhin auf $('menu-root') / $('menu-toggle') / $('app-menu') zu
+// und ließ das gesamte Modul beim Start mit einem TypeError sterben.
 
 // ============================================================
 // Geräte: Kamera, Sensoren, GPS.
@@ -486,7 +472,6 @@ $('record').addEventListener('click', () => void run(() => {
 }));
 
 function showAtlas(visible) {
-  setMenuOpen(false);
   if (visible) {
     renderDashboard($('dashboard'), atlas.read(), currentPois, openPoi);
     if (camera.active) camera.stop();
