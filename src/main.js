@@ -66,35 +66,6 @@ if (mapPanel) {
     console.warn('Bahnhöfe konnten nicht geladen werden:', error);
   });
 
-
-// Gebäudestreaming
-// Aktuell haben die meisten neuen POIs noch keine
-// aktivierten Gebäudegeometrien.
-const buildingProvider = createOSMBuildingsProvider();
-
-const buildings = createBuildingStream(
-  currentPois,
-  buildingProvider,
-  {
-    onStatus: ({loaded, loading, errors}) => {
-      $('building-status').textContent =
-        `${loaded} Gebäude geladen` +
-        (loading ? ` · ${loading} im Abruf` : '') +
-        (errors ? ` · ${errors} ohne abrufbares Modell` : '');
-    },
-  }
-);
-
-// AR-Overlay – nur eine einzige Instanz
-const renderOverlay = createOverlay(
-  $('models'),
-  $('markers'),
-  currentPois,
-  openPoi,
-  video,
-  poi => buildings.getModel(poi)
-);
-
 // Kamera
 const camera = createCamera(video, active => {
   video.classList.toggle('active', active);
