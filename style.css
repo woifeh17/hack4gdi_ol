@@ -118,23 +118,7 @@ body::before {
 [data-theme="dark"] .marker { color: #f4fffc; text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6); }
 
 /* --- Header: floating glass bar over the camera --------------- */
-.header {
-  position: fixed;
-  top: 0; left: 0; right: 0;
-  z-index: 40;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: .7rem;
-  padding: .7rem 1rem;
-  padding-top: max(.7rem, env(safe-area-inset-top));
-  background: var(--glass);
-  backdrop-filter: var(--blur);
-  -webkit-backdrop-filter: var(--blur);
-  border-bottom: 1px solid var(--line);
-  box-shadow: 0 1px 0 var(--glass-highlight) inset;
-}
+
 .brand {
   font-weight: 800;
   letter-spacing: .02em;
