@@ -55,7 +55,6 @@ export function createMapPanel(parent, options = {}) {
   railPane.style.zIndex = 350;
 
 
-
   const markerLayer = L.layerGroup().addTo(map);
 
   function setOpen(open) {
@@ -63,6 +62,16 @@ export function createMapPanel(parent, options = {}) {
     toggle.setAttribute('aria-expanded', String(open));
     toggle.setAttribute('aria-label', open ? 'Karte verkleinern' : 'Karte vergrößern');
     toggle.textContent = open ? '✕' : '🗺';
+    // Höhe zurücksetzen, wenn die Karte geschlossen wird
+    if (!open) {
+      mapEl.style.height = '';
+    } else {
+      // Wenn die Karte geöffnet wird, Höhe basierend auf routeBar Zustand anpassen
+      const isCollapsed = routeBar.classList.contains('map-route-bar--collapsed');
+      const barHeight = isCollapsed ? 32 : 40;
+      mapEl.style.height = `calc(100% - ${barHeight}px)`;
+    }
+    setTimeout(() => map.invalidateSize(), 50);
   }
 
   toggle.addEventListener('click', () => {
@@ -81,7 +90,7 @@ export function createMapPanel(parent, options = {}) {
     <p class="map-route-bar__message" role="status"></p>
   `;
   root.appendChild(routeBar);
-  L.DomEvent.disableClickPropagation(routeBar); // Klicks auf die Leiste nicht an die Karte weitergeben
+  L.DomEvent.disableClickPropagation(routeBar);
 
   // Leiste ein- und ausklappen. Der Schalter sitzt in der Leiste selbst,
   // damit er zusammen mit ihr ein- und ausgeblendet wird.
@@ -89,21 +98,35 @@ export function createMapPanel(parent, options = {}) {
   barToggle.type = 'button';
   barToggle.className = 'map-route-bar__toggle';
   barToggle.setAttribute('aria-controls', listId);
-  routeBar.querySelector('[name="from"]').after(barToggle); // direkt hinter dem Start-Feld
-
+  routeBar.querySelector('[name="from"]').after(barToggle);
 
   function setBarCollapsed(collapsed) {
     routeBar.classList.toggle('map-route-bar--collapsed', collapsed);
     barToggle.setAttribute('aria-expanded', String(!collapsed));
     barToggle.setAttribute('aria-label', collapsed ? 'Suchleiste ausklappen' : 'Suchleiste einklappen');
     barToggle.textContent = collapsed ? '▼ Suche' : '▲ Suche';
+    
+    // Höhe der routeBar anpassen, damit die Karte Platz hat
+    const barHeight = collapsed ? 32 : 40;
+    mapEl.style.height = `calc(100% - ${barHeight}px)`;
+    setTimeout(() => map.invalidateSize(), 50);
+  }
+
+
+  function setBarCollapsed(collapsed) {
+    routeBar.classList.toggle('map-route-bar--collapsed', collapsed);
+    barToggle.setAttribute('aria-expanded', String(!collapsed));
+    barToggle.setAttribute('aria-label', collapsed ? 'Suchleiste ausklappen' : 'Suchleiste einklappen');
+    barToggle.textContent = collapsed ? '▼' : '▲';
+    // Nach dem Umklappen die Karte neu berechnen
+    setTimeout(() => map.invalidateSize(), 100);
   }
 
   barToggle.addEventListener('click', () => {
     setBarCollapsed(!routeBar.classList.contains('map-route-bar--collapsed'));
   });
 
-  setBarCollapsed(false); // Startzustand: ausgeklappt
+  setBarCollapsed(true); // Startzustand: eingeklappt
 
 
   const datalist = routeBar.querySelector('datalist');
