@@ -119,22 +119,32 @@ export function createOverlay(
       const elevation = Math.atan2(up, relative.distance) / RAD;
       const building = projectBuilding(getModel(poi), {relative, up}, camera, fieldOfView);
       const point = projectPoi(relative.bearing, elevation, camera, ...fieldOfView) ?? building?.anchor;
-      if (!point) return;
+      const wideFov = fieldOfView.map(angle => Math.min(170, angle + 24));
+      const nearby = point ?? projectPoi(relative.bearing, elevation, camera, ...wideFov);
+      if (!nearby) return;
+      const projected = point ?? {
+        x: 0.5 + (nearby.x - 0.5) * Math.tan(wideFov[0] * RAD / 2) / Math.tan(fieldOfView[0] * RAD / 2),
+        y: 0.5 + (nearby.y - 0.5) * Math.tan(wideFov[1] * RAD / 2) / Math.tan(fieldOfView[1] * RAD / 2),
+      };
 
-      const score = poiScore(relative.distance, point, poi.priority, previouslyVisible.has(poi.id));
-      candidates.push({poi, index, relative, building, point, score});
+
+      const score = poiScore(relative.distance, projected, poi.priority, previouslyVisible.has(poi.id));
+      candidates.push({poi, index, relative, building, point: projected, visible: Boolean(point), score});
     });
 
-    candidates.sort((a, b) => a.score - b.score ||
+    candidates.sort((a, b) =>
+      Number(previouslyVisible.has(b.poi.id)) - Number(previouslyVisible.has(a.poi.id)) ||
+      a.score - b.score ||
       a.relative.distance - b.relative.distance ||
       String(a.poi.id).localeCompare(String(b.poi.id)));
 
     const accepted = [];
     const occupied = [];
+    const layout = new Map();
     const displayDistances = Boolean(showDistance());
 
     for (const candidate of candidates) {
-      if (accepted.length >= MAX_VISIBLE_POIS) break;
+      if (candidate.visible && accepted.length >= MAX_VISIBLE_POIS) continue;
       const {button, distance} = labels[candidate.index];
 
       // Distance participates in sizing and overlap avoidance.
@@ -152,34 +162,28 @@ export function createOverlay(
       }
       const anchorX = screenX(candidate.point);
       const anchorY = screenY(candidate.point);
-      const x = clamp(anchorX, labelWidth / 2 + SCREEN_MARGIN_PX,
-        width - labelWidth / 2 - SCREEN_MARGIN_PX);
-      const left = x - labelWidth / 2;
-      const right = x + labelWidth / 2;
-      const above = anchorY - LABEL_OFFSET_PX - labelHeight;
-      const below = anchorY + LABEL_OFFSET_PX;
-      const previousSide = previouslyVisible.get(candidate.poi.id);
-      const placements = candidate.building
-        ? [{y: clamp(anchorY, SCREEN_MARGIN_PX, height - labelHeight - SCREEN_MARGIN_PX)}]
-        : [{y: above, side: 'above'}, {y: below, side: 'below'}];
-      if (previousSide === 'below' && !candidate.building) placements.reverse();
-
+      const slots = [0, 1, 2, 3, 4, 5];
+      const previous = previouslyVisible.get(candidate.poi.id);
+      if (previous != null) slots.sort((a, b) => Number(b === previous) - Number(a === previous));
       let placed = false;
-      for (const {y, side} of placements) {
-        if (y < SCREEN_MARGIN_PX || y + labelHeight > height - SCREEN_MARGIN_PX) continue;
-        const rect = {left, right, top: y, bottom: y + labelHeight};
-        const footprint = candidate.building ? rect : {
-          left: Math.min(left, anchorX - POINT_RADIUS_PX),
-          right: Math.max(right, anchorX + POINT_RADIUS_PX),
-          top: Math.min(y, anchorY - POINT_RADIUS_PX),
-          bottom: Math.max(y + labelHeight, anchorY + POINT_RADIUS_PX),
-        };
-        if (occupied.some(other => overlaps(footprint, other))) continue;
-
+      for (const slot of slots) {
+        const side = slot % 2 === 0 ? 'above' : 'below';
+        const row = Math.floor(slot / 2);
+        const x = candidate.visible
+          ? clamp(anchorX, labelWidth / 2 + SCREEN_MARGIN_PX, width - labelWidth / 2 - SCREEN_MARGIN_PX)
+          : anchorX;
+        const y = side === 'above'
+          ? anchorY - LABEL_OFFSET_PX - labelHeight - row * (labelHeight + COLLISION_GAP_PX)
+          : anchorY + LABEL_OFFSET_PX + row * (labelHeight + COLLISION_GAP_PX);
+        if (candidate.visible && (y < SCREEN_MARGIN_PX || y + labelHeight > height - SCREEN_MARGIN_PX)) continue;
+        const rect = {left: x - labelWidth / 2, right: x + labelWidth / 2, top: y, bottom: y + labelHeight};
+        if (occupied.some(other => overlaps(rect, other))) continue;
+        occupied.push(rect);
+        layout.set(candidate.poi.id, slot);
+        button.hidden = !candidate.visible;
         button.style.left = `${x}px`;
         button.style.top = `${y}px`;
-        occupied.push(footprint);
-        accepted.push({...candidate, side, anchorX, anchorY, rect});
+        if (candidate.visible) accepted.push({...candidate, side, anchorX, anchorY, rect});
         placed = true;
         break;
       }
@@ -189,8 +193,8 @@ export function createOverlay(
     const visibleBuildings = accepted.map(candidate => candidate.building).filter(Boolean);
     drawShadedBuildings(ctx, visibleBuildings, screenX, screenY);
     for (const candidate of accepted) {
-      if (!candidate.building) drawPointMarker(ctx, candidate);
+      drawPointMarker(ctx, candidate);
     }
-    previouslyVisible = new Map(accepted.map(candidate => [candidate.poi.id, candidate.side]));
+    previouslyVisible = layout;
   };
 }

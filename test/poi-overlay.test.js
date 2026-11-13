@@ -13,7 +13,7 @@ test('distance wins over accumulated bonuses, with a small preference for stable
   assert.ok(poiScore(120, center, 1, false) < poiScore(120, center, 2, false));
 });
 
-test('draws one anchor and leader for a point POI, and keeps a competing label out', t => {
+test('places two competing labels above and below their anchors', t => {
   const originalDocument = globalThis.document;
   globalThis.document = {
     createElement: () => ({style: {}, offsetWidth: 100, offsetHeight: 26, append() {}, addEventListener() {}}),
@@ -41,9 +41,9 @@ test('draws one anchor and leader for a point POI, and keeps a competing label o
   const fov = [65, 55];
 
   render({position, camera: manualCameraPose(0, 0)}, fov);
-  assert.deepEqual(labels.map(label => label.hidden), [false, true]);
-  assert.deepEqual(points, [[180, 320]]);
-  assert.deepEqual(lines, [[180, 304]]);
+  assert.deepEqual(labels.map(label => label.hidden), [false, false]);
+  assert.deepEqual(points, [[180, 320], [180, 320]]);
+  assert.deepEqual(lines, [[180, 304], [180, 336]]);
   assert.equal(labels[0].style.top, '278px');
 
   render({position, camera: manualCameraPose(0, -27)}, fov);

@@ -65,7 +65,7 @@ test('shows and labels the real Mainz campus when its POI is outside the camera 
   const markers = {replaceChildren() {}, append(button) { label = button; }};
   let fills = 0;
   const ctx = {
-    setTransform() {}, clearRect() { fills = 0; },
+    stroke() {}, arc() {}, setTransform() {}, clearRect() { fills = 0; },
     beginPath() {}, moveTo() {}, lineTo() {}, closePath() {}, fill() { fills++; },
   };
   const canvas = {clientWidth: 360, clientHeight: 640, getContext: () => ctx};
