@@ -8,10 +8,19 @@ export function createOrientation(onStatus) {
 
   function receive(event) {
     if (![event.alpha, event.beta, event.gamma].every(Number.isFinite)) return;
-    const absolute = event.absolute || event.type === 'deviceorientationabsolute';
+    let absolute = event.absolute || event.type === 'deviceorientationabsolute';
+    let alpha = event.alpha;
+    // iOS/Safari unterstützt weder deviceorientationabsolute noch ein
+    // verlässliches event.absolute. Der absolute Kompasskurs steckt dort
+    // im nicht-Standard-Feld webkitCompassHeading (Grad ab Norden, im
+    // Uhrzeigersinn). W3C-alpha zählt gegen den Uhrzeigersinn, daher 360 − x.
+    if (!absolute && Number.isFinite(event.webkitCompassHeading)) {
+      absolute = true;
+      alpha = normalize360(360 - event.webkitCompassHeading);
+    }
     if (!absolute && sample?.absolute && performance.now() - sample.time < 3000) return;
     const first = !sample || sample.absolute !== absolute;
-    sample = {alpha: event.alpha, beta: event.beta, gamma: event.gamma, absolute, time: performance.now()};
+    sample = {alpha, beta: event.beta, gamma: event.gamma, absolute, time: performance.now()};
     if (first) {
       yaw = null;
       onStatus(absolute ? 'Absolute Orientierung aktiv.' : 'Relative Orientierung aktiv. Bitte Azimut kalibrieren.');
@@ -28,7 +37,9 @@ export function createOrientation(onStatus) {
     async start() {
       const api = window.DeviceOrientationEvent;
       if (!api) throw new Error('Orientierungssensoren werden hier nicht unterstützt.');
-      if (api.requestPermission && await api.requestPermission(true) !== 'granted') {
+      // iOS verlangt requestPermission() ohne Argument und nur aus einer
+      // echten Nutzergeste heraus (siehe startSensors in main.js).
+      if (api.requestPermission && await api.requestPermission() !== 'granted') {
         throw new Error('Sensorberechtigung verweigert.');
       }
       active = true;

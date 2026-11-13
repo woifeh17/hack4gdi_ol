@@ -231,6 +231,25 @@ function stepSheet(direction) {
   });
 })();
 
+// Three-dot settings menu.
+const menuRoot = $('menu-root');
+function setMenuOpen(open) {
+  $('app-menu').hidden = !open;
+  $('menu-toggle').setAttribute('aria-expanded', String(open));
+  $('menu-toggle').setAttribute('aria-label', open ? 'Einstellungen schließen' : 'Einstellungen öffnen');
+  if (!open) $('developer-options').open = false;
+}
+$('menu-toggle').addEventListener('click', () => setMenuOpen($('app-menu').hidden));
+document.addEventListener('pointerdown', event => {
+  if (!menuRoot.contains(event.target)) setMenuOpen(false);
+});
+document.addEventListener('keydown', event => {
+  if (event.key === 'Escape' && !$('app-menu').hidden) {
+    setMenuOpen(false);
+    $('menu-toggle').focus();
+  }
+});
+
 // ============================================================
 // Geräte: Kamera, Sensoren, GPS.
 // ============================================================
@@ -372,11 +391,15 @@ async function startSensors(userGesture = false) {
 }
 
 // One-tap fallback for permissions blocked during automatic startup.
+// iOS zeigt Berechtigungsdialoge nur nacheinander und nur innerhalb der
+// Nutzergeste: parallele Requests führen dort zu NotAllowedError, ohne dass
+// der Nutzer einen Dialog sieht. Deshalb strikt sequenziell anfordern.
 $('enable-ar').addEventListener('click', () => {
-  // First call runs within user activation; do not await camera or GPS here.
-  if (!orientation.active) void startSensors(true);
-  if (!camera.active && !cameraBusy) void startCamera();
-  if (!position.active) startGps();
+  void (async () => {
+    if (!orientation.active) await startSensors(true);
+    if (!camera.active && !cameraBusy) await startCamera();
+    if (!position.active) startGps();
+  })();
 });
 
 $('camera-toggle').addEventListener('click', () => {
@@ -463,6 +486,7 @@ $('record').addEventListener('click', () => void run(() => {
 }));
 
 function showAtlas(visible) {
+  setMenuOpen(false);
   if (visible) {
     renderDashboard($('dashboard'), atlas.read(), currentPois, openPoi);
     if (camera.active) camera.stop();
@@ -515,7 +539,13 @@ window.addEventListener('pagehide', () => {
 
 // Automatic startup: camera, geolocation and (where allowed) sensors.
 // Browsers can still prompt or deny access; the banner offers a retry.
+// Kamera und GPS ebenfalls nacheinander starten, damit iOS die beiden
+// Berechtigungsdialoge nicht gleichzeitig anfordern muss.
 syncControls();
-startGps();
-void startCamera();
+void (async () => {
+  await startCamera();
+  startGps();
+})();
+// Sensoren ohne Geste nur „armieren“: startSensors(false) zeigt auf iOS
+// (DeviceOrientationEvent.requestPermission) nur den Banner.
 void startSensors(false);
