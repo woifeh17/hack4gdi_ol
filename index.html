@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>WindowLens · Bahn-Atlas</title>
   <link rel="stylesheet" href="./style.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script type="module" src="./src/main.js"></script>
 </head>
 <body>
@@ -55,6 +57,7 @@
           <button type="button" id="reset">Kalibrierung löschen</button>
         </form>
       </details>
+      <div id="map-panel"></div>
     </section>
     <section id="dashboard" aria-labelledby="atlas-title" hidden>
       <h1 id="atlas-title">Dein Atlas</h1>

@@ -4,6 +4,7 @@ import {createPosition} from './device/position.js';
 import {createPoseProvider} from './ar/pose.js';
 import {createOverlay} from './ar/overlay.js';
 import {pois} from './data/pois.js';
+import { createMapPanel } from './map/map-panel.js';
 import {createPoiDetails} from './data/details.js';
 import {createAtlas} from './atlas/store.js';
 import {renderDashboard} from './atlas/view.js';
@@ -16,18 +17,40 @@ const recorder = createJourneyRecorder();
 const openPoi = createPoiDetails($('poi-dialog'), id => atlas.collect(id), announce);
 const video = $('camera');
 const renderOverlay = createOverlay($("models"), $("markers"), pois, openPoi, video);
+const mapPanel = createMapPanel($('map-panel'), {
+  pois,
+  center: [49.9881632, 8.2270956],
+  zoom: 13,
+  onPoiClick: poi => openPoi(poi),
+});
+fetch('./src/data/rail.geojson')
+  .then(r => r.json())
+  .then(data => mapPanel.addGeoJson(data, {
+    color: '#475569',
+    weight: 2,
+    opacity: 0.8,
+  }))
+  .catch(err => console.error('Schienennetz konnte nicht geladen werden:', err));
+
 const camera = createCamera(video, active => {
   video.classList.toggle('active', active);
   $('camera-toggle').textContent = active ? 'Kamera stoppen' : 'Kamera starten';
   $('switch').disabled = !active;
 });
 const orientation = createOrientation(announce);
+let mapCentered = false; // merkt sich, ob die Karte schon auf GPS gesetzt wurde
+
 const position = createPosition((fix, status) => {
   $('position').textContent = fix.source === 'gps' ? status : 'Mainz · Referenzstandort';
   $('gps').textContent = position.active ? 'GPS beenden' : 'GPS aktivieren';
   recorder.sample(fix);
+  if (fix.source === 'gps' && !mapCentered) {
+    mapPanel.setView(fix.lat, fix.lon);
+    mapCentered = true;
+  }
   announce(status);
 });
+
 const poses = createPoseProvider(position, orientation);
 const value = id => Number($(id).value);
 const run = async action => {
