@@ -15,6 +15,13 @@
       try { saved = localStorage.getItem("theme"); } catch { /* Storage may be unavailable. */ }
       var prefersLight = window.matchMedia("(prefers-color-scheme: light)").matches;
       document.documentElement.dataset.theme = saved || (prefersLight ? "light" : "dark");
+      // Performance-Modus (Glasflächen aus) schon vor dem ersten Rendern
+      // anwenden, damit die Blur-Effekte nicht kurz aufblitzen.
+      try {
+        if (localStorage.getItem("windowlens.glassSurfaces.v1") === "off") {
+          document.documentElement.dataset.glass = "off";
+        }
+      } catch { /* Storage may be unavailable. */ }
     })();
   </script>
 </head>
@@ -37,16 +44,6 @@
  <!-- HUD: Standort und Blickrichtung als nebeneinanderliegende Glas-Chips -->
     <div id="hud">
       <h1 id="scene-title" class="visually-hidden">Blick aus dem Zug</h1>
-      <div class="hud-row">
-        <p class="hud-chip">
-          <span class="hud-chip__label">Standort</span>
-          <output id="position" aria-label="Positionsgenauigkeit">—</output>
-        </p>
-        <p class="hud-chip">
-          <span class="hud-chip__label">Blickrichtung</span>
-          <output id="pose" aria-label="Blickrichtung in Grad">203°</output>
-        </p>
-      </div>
       <p id="status" class="visually-hidden" role="status">Anwendung wird gestartet …</p>
       <div id="permission-banner" class="permission-banner" hidden>
         <span id="permission-message">Für AR ist eine Berechtigung erforderlich.</span>
@@ -55,6 +52,18 @@
         <span id="permission-gps-status" hidden></span>
       </div>
       <p id="building-status" role="status">0 Gebäude geladen</p>
+    </div>
+
+    <!-- Standort und Blickrichtung: schweben direkt über dem Sheet -->
+    <div class="hud-row" id="hud-dock">
+      <p class="hud-chip">
+        <span class="hud-chip__label">Standort</span>
+        <output id="position" aria-label="Positionsgenauigkeit">—</output>
+      </p>
+      <p class="hud-chip">
+        <span class="hud-chip__label">Blickrichtung</span>
+        <output id="pose" aria-label="Blickrichtung in Grad">203°</output>
+      </p>
     </div>
 
     <!-- Bottom-Sheet im Apple-Maps-Stil: peek → half → full -->
@@ -86,6 +95,11 @@
             <input id="show-poi-distance" type="checkbox">
             <span>Entfernung an POIs anzeigen</span>
           </label>
+          <label class="settings-check">
+            <input id="glass-surfaces" type="checkbox" checked>
+            <span>Transparente Glasflächen</span>
+          </label>
+          <p class="device-status">Auf langsameren Smartphones deaktivieren: ersetzt die Blur-Effekte durch schnelle Vollflächen.</p>
           <details id="developer-options" class="developer-options">
             <summary>Entwickleroptionen · Kalibrierung</summary>
             <div class="developer-body">

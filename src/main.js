@@ -116,7 +116,7 @@ Promise.all([
   console.info(`WindowLens: ${lod2} LoD2 POIs, ${osm} POIs with OSM geometry`);
 });
 
-// User preference – off by default; survives page reloads.
+// User preferences – off by default; survive page reloads.
 const DISTANCE_STORAGE_KEY = 'windowlens.showPoiDistance.v1';
 try {
   $('show-poi-distance').checked = localStorage.getItem(DISTANCE_STORAGE_KEY) === 'true';
@@ -126,6 +126,25 @@ $('show-poi-distance').addEventListener('change', () => {
     localStorage.setItem(DISTANCE_STORAGE_KEY, String($('show-poi-distance').checked));
   } catch { /* Preference remains active for this session. */ }
 });
+
+// Transparente Glasflächen (Performance-Modus). Die 24px-Backdrop-Blur-
+// Effekte über der laufenden Kamera sind auf Mittelklasse-Smartphones
+// extrem teuer; ohne sie laufen Marker, Sheet und Header als Vollflächen.
+const GLASS_STORAGE_KEY = 'windowlens.glassSurfaces.v1';
+const applyGlassPreference = () => {
+  if ($('glass-surfaces').checked) delete document.documentElement.dataset.glass;
+  else document.documentElement.dataset.glass = 'off';
+};
+try {
+  $('glass-surfaces').checked = localStorage.getItem(GLASS_STORAGE_KEY) !== 'off';
+} catch { /* Private mode can disallow storage. */ }
+$('glass-surfaces').addEventListener('change', () => {
+  try {
+    localStorage.setItem(GLASS_STORAGE_KEY, $('glass-surfaces').checked ? 'on' : 'off');
+  } catch { /* Preference remains active for this session. */ }
+  applyGlassPreference();
+});
+applyGlassPreference();
 
 // AR-Overlay – nur eine einzige Instanz
 const renderOverlay = createOverlay(
@@ -154,6 +173,9 @@ const renderOverlay = createOverlay(
 // ============================================================
 const grabber = $('sheet-grabber');
 const sheetBody = $('sheet-body');
+// HUD-Chips (Standort/Blickrichtung), die über dem Sheet schweben.
+const hudDock = $('hud-dock');
+const hudHeader = document.querySelector('.header');
 const SHEET_STATES = ['peek', 'half', 'full'];
 let sheetState = 'peek';
 let sheetTimer = null;
@@ -174,12 +196,14 @@ function setSheetState(state) {
   sheet.className = `sheet sheet--${state}`;
   grabber.setAttribute('aria-expanded', String(state !== 'peek'));
   sheetBody.inert = state === 'peek';
-  
+  // Voll ausgefahren: HUD-Chips verschwinden garantiert.
+  hudDock.classList.toggle('hud-dock--hidden', state === 'full');
+
   // Bei full Sheet: Karte auf volle Höhe ausdehnen
   if (mapPanel) {
     mapPanel.setOpen(state === 'full');
   }
-  
+
   resizeMapAfterSheetChange();
 }
 
@@ -529,6 +553,23 @@ function showAtlas(visible) {
 $('atlas').addEventListener('click', () => void run(() => showAtlas(true)));
 $('explore').addEventListener('click', () => showAtlas(false));
 
+// ============================================================
+// HUD-Dock: Standort- und Blickrichtungs-Chips folgen dem Sheet.
+// `bottom` wird jeden Frame aus der sichtbaren Sheet-Höhe
+// berechnet, dadurch bewegen sich die Chips auch beim Ziehen
+// live mit. Im Full-Zustand und ohne Platz über dem Sheet
+// werden sie ausgeblendet.
+// ============================================================
+function trackHudOverSheet() {
+  const sheetTop = sheet.getBoundingClientRect().top;
+  hudDock.style.bottom = `calc(${window.innerHeight - sheetTop}px + .75rem)`;
+  const room = sheetTop - (hudHeader ? hudHeader.getBoundingClientRect().bottom : 0);
+  hudDock.classList.toggle(
+    'hud-dock--hidden',
+    sheetState === 'full' || room < hudDock.offsetHeight + 16
+  );
+}
+
 function draw() {
   if (!$('scene').hidden) {
     // Switch from demonstration heading to real absolute orientation only
@@ -553,6 +594,7 @@ function draw() {
     $('recording').textContent = recorder.current
       ? `${(recorder.current.distanceM / 1000).toFixed(2)} km` : '';
   }
+  trackHudOverSheet();
   requestAnimationFrame(draw);
 }
 requestAnimationFrame(draw);
