@@ -260,7 +260,7 @@ h2 { font-size: 1.15rem; }
   max-width: 100%;
   text-align: center;
   color: var(--text-muted);
-  padding: .4rem 1rem;
+  padding: .2rem 1rem;
   border-radius: 999px;
   background: var(--glass);
   border: 1px solid var(--line);
@@ -274,7 +274,7 @@ h2 { font-size: 1.15rem; }
   align-items: center;
   gap: .75rem;
   width: 100%;
-  padding: .6rem 1rem;
+  padding: .2rem 1rem;
   border-radius: var(--radius);
   background: var(--glass);
   border: 1px solid var(--line);
