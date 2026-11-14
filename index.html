@@ -15,6 +15,13 @@
       try { saved = localStorage.getItem("theme"); } catch { /* Storage may be unavailable. */ }
       var prefersLight = window.matchMedia("(prefers-color-scheme: light)").matches;
       document.documentElement.dataset.theme = saved || (prefersLight ? "light" : "dark");
+      // Performance-Modus (Glasflächen aus) schon vor dem ersten Rendern
+      // anwenden, damit die Blur-Effekte nicht kurz aufblitzen.
+      try {
+        if (localStorage.getItem("windowlens.glassSurfaces.v1") === "off") {
+          document.documentElement.dataset.glass = "off";
+        }
+      } catch { /* Storage may be unavailable. */ }
     })();
   </script>
 </head>
@@ -86,6 +93,11 @@
             <input id="show-poi-distance" type="checkbox">
             <span>Entfernung an POIs anzeigen</span>
           </label>
+          <label class="settings-check">
+            <input id="glass-surfaces" type="checkbox" checked>
+            <span>Transparente Glasflächen</span>
+          </label>
+          <p class="device-status">Auf langsameren Smartphones deaktivieren: ersetzt die Blur-Effekte durch schnelle Vollflächen.</p>
           <details id="developer-options" class="developer-options">
             <summary>Entwickleroptionen · Kalibrierung</summary>
             <div class="developer-body">
