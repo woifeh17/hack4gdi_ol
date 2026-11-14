@@ -21,7 +21,18 @@ console.log(`WindowLens: ${currentPois.length} POIs geladen`);
 
 const atlas = createAtlas();
 const recorder = createJourneyRecorder();
-const openPoi = createPoiDetails($('poi-dialog'), id => atlas.collect(id), announce);
+const collectedPoiIds = () => {
+  try {
+    return atlas.read().objects.map(entry => entry.poiId);
+  } catch {
+    return [];
+  }
+};
+const syncCollectedPois = () => mapPanel?.setCollected(collectedPoiIds());
+const openPoi = createPoiDetails($('poi-dialog'), id => {
+  atlas.collect(id);
+  syncCollectedPois();
+}, announce);
 const video = $('camera');
 const stage = $('scene-stage');
 const sheet = $('sheet');
@@ -30,6 +41,7 @@ const mapPanel = window.L ? createMapPanel($('map-panel'), {
   pois: currentPois,
   center: [49.9881632, 8.2270956],
   zoom: 12,
+  collectedIds: collectedPoiIds(),
   onPoiClick: poi => openPoi(poi, { collectable: false }),
   onRouteRequest: (from, to) => {
     console.log('Route angefragt:', from.properties.Bezeichnung, '→', to.properties.Bezeichnung);
@@ -296,6 +308,11 @@ function handlePositionUpdate(fix, status) {
     fix.source === 'gps' && Number.isFinite(fix.accuracy)
       ? `±${Math.round(fix.accuracy)} m`
       : '—';
+  // Karte nutzt denselben Standort-Service; der Mainz-Fallback wird nicht
+  // als vermeintlicher GPS-Fix eingezeichnet.
+  const hasGpsFix = fix.source === 'gps' &&
+    Number.isFinite(fix.lat) && Number.isFinite(fix.lon);
+  mapPanel?.setLocation(hasGpsFix ? fix.lat : null, hasGpsFix ? fix.lon : null);
   recorder.sample(fix);
   if (fix.source === 'gps' && !mapCentered) {
     mapPanel?.setView(fix.lat, fix.lon);
