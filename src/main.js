@@ -536,13 +536,12 @@ $('record').addEventListener('click', () => void run(() => {
 }));
 
 function showAtlas(visible) {
-  if (visible) {
-    renderDashboard($('dashboard'), atlas.read(), currentPois, openPoi);
-    if (camera.active) camera.stop();
-  }
+  const data = visible ? atlas.read() : null;
+  if (visible && camera.active) camera.stop();
   stage.hidden = visible;
   $('scene').hidden = visible;
   $('dashboard').hidden = !visible;
+  if (visible) renderDashboard($('dashboard'), data, currentPois, openPoi);
   $('explore').setAttribute('aria-pressed', String(!visible));
   $('atlas').setAttribute('aria-pressed', String(visible));
   // Restore the camera when returning to AR, unless the user disabled it.

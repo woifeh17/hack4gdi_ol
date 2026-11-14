@@ -424,7 +424,7 @@ h2 { font-size: 1.15rem; }
 .sheet__body > * { margin-top: .9rem; }
 
 /* --- Panels inside the sheet ---------------------------------- */
-details, dialog, .stats p {
+details, dialog {
   background: var(--glass);
   backdrop-filter: var(--blur);
   -webkit-backdrop-filter: var(--blur);
@@ -509,10 +509,71 @@ input[type="number"] {
   overflow-y: auto;
   padding: 5.5rem 1rem 2rem;
 }
-.stats { display: flex; gap: .9rem; flex-wrap: wrap; }
-.stats strong { color: var(--mint); display: block; font-size: 2rem; letter-spacing: -.02em; }
-[data-theme="dark"] .stats strong { text-shadow: 0 0 24px rgba(0, 255, 220, 0.35); }
-#dashboard ul { padding-left: 1.2rem;   margin-bottom: 5px}
+.atlas-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .75rem;
+  margin: .85rem 0;
+}
+.atlas-stats button {
+  position: relative;
+  padding: .65rem .75rem;
+  border-radius: var(--radius-sm);
+  text-align: left;
+}
+.atlas-stats strong { display: block; color: var(--mint); font-size: 1.55rem; }
+.atlas-stats button::after {
+  content: '';
+  position: absolute;
+  top: .9rem;
+  right: .8rem;
+  width: .35rem;
+  height: .35rem;
+  border: solid currentColor;
+  border-width: 0 1.5px 1.5px 0;
+  transform: rotate(45deg);
+}
+.atlas-stats button[aria-expanded="true"] { border-color: var(--mint); }
+.atlas-stats button[aria-expanded="true"]::after { transform: rotate(225deg); }
+.atlas-list {
+  max-height: 11rem;
+  overflow: auto;
+  margin: 0 0 .85rem;
+  padding: .5rem .75rem .5rem 1.65rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--glass);
+}
+.atlas-list li + li { margin-top: .35rem; }
+.atlas-map {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--glass);
+}
+.atlas-map__view {
+  height: clamp(280px, 56dvh, 620px);
+  isolation: isolate;
+}
+.atlas-map__heat {
+  position: absolute;
+  pointer-events: none;
+}
+.atlas-map__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .4rem 1rem;
+  padding: .55rem .75rem;
+  font-size: .8rem;
+}
+.atlas-map__legend > span { display: inline-flex; align-items: center; gap: .4rem; }
+.atlas-map__gradient {
+  width: 2.6rem;
+  height: .45rem;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #6b63ff, #f79032, #e6224d);
+}
+[data-atlas-map-status] { padding: .4rem .75rem .7rem; }
 
 /* --- Dialog ---------------------------------------------------- */
 dialog {

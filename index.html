@@ -128,12 +128,24 @@
 
   <section id="dashboard" aria-labelledby="atlas-title" hidden>
     <h1 id="atlas-title">Dein Atlas</h1>
-    <div class="stats">
-      <p><strong data-count>0</strong> gesammelte POIs</p>
-      <p><strong data-distance>0</strong> gefahrene km</p>
+    <div class="atlas-stats">
+      <button type="button" aria-expanded="false" aria-controls="atlas-objects">
+        <strong data-count>0</strong> Gesammelte POIs
+      </button>
+      <button type="button" aria-expanded="false" aria-controls="atlas-journeys">
+        <strong><span data-distance>0</span> km</strong> Gefahrene Kilometer
+      </button>
     </div>
-    <h2>Gesammelte POIs</h2><ul data-objects></ul>
-    <h2>Aufgezeichnete Fahrten</h2><ul data-journeys></ul>
+    <ul id="atlas-objects" class="atlas-list" aria-label="Gesammelte POIs" hidden></ul>
+    <ul id="atlas-journeys" class="atlas-list" aria-label="Aufgezeichnete Fahrten" hidden></ul>
+    <div class="atlas-map">
+      <div class="atlas-map__view" data-atlas-map role="region" aria-label="Karte mit gesammelten POIs und aufgezeichneten Fahrten"></div>
+      <div class="atlas-map__legend">
+        <span><span class="map-legend__dot map-legend__dot--collected" aria-hidden="true"></span> Gesammelter POI</span>
+        <span><span class="atlas-map__gradient" aria-hidden="true"></span> Selten bis häufig befahren</span>
+      </div>
+      <p data-atlas-map-status role="status" hidden></p>
+    </div>
   </section>
 
   <dialog id="poi-dialog" aria-labelledby="poi-title">
