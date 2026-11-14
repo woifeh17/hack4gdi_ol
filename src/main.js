@@ -285,7 +285,11 @@ const orientation = createOrientation(status => {
 
 let mapCentered = false;
 function handlePositionUpdate(fix, status) {
-  $('position').textContent = fix.source === 'gps' ? status : 'Mainz · Referenzstandort';
+  // Standort-Chip zeigt nur die aktuelle Positionsgenauigkeit.
+  $('position').textContent =
+    fix.source === 'gps' && Number.isFinite(fix.accuracy)
+      ? `±${Math.round(fix.accuracy)} m`
+      : '—';
   recorder.sample(fix);
   if (fix.source === 'gps' && !mapCentered) {
     mapPanel?.setView(fix.lat, fix.lon);
@@ -528,9 +532,10 @@ function draw() {
       : null;
     const frame = poses.getFrame({facing: camera.facing, manual});
     buildings.update(frame);
+    // Blickrichtungs-Chip zeigt nur den Azimut in Grad.
     $('pose').textContent = frame.camera
-      ? `${frame.camera.heading == null ? '—' : Math.round(frame.camera.heading) + '°'} / ${Math.round(frame.camera.pitch)}°`
-      : '— / —';
+      ? (frame.camera.heading == null ? '—' : `${Math.round(frame.camera.heading)}°`)
+      : '—';
     renderOverlay(frame, [value('hfov'), value('vfov')]);
     $('recording').textContent = recorder.current
       ? `${(recorder.current.distanceM / 1000).toFixed(2)} km` : '';

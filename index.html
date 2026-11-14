@@ -34,16 +34,23 @@
   </header>
 
   <section id="scene" aria-labelledby="scene-title">
-    <!-- HUD: Status, Szenen-Kopf und Gebäude-Zähler in einem Stapel -->
+ <!-- HUD: Standort und Blickrichtung als nebeneinanderliegende Glas-Chips -->
     <div id="hud">
-      <p id="status" role="status">Anwendung wird gestartet …</p>
+      <h1 id="scene-title" class="visually-hidden">Blick aus dem Zug</h1>
+      <div class="hud-row">
+        <p class="hud-chip">
+          <span class="hud-chip__label">Standort</span>
+          <output id="position" aria-label="Positionsgenauigkeit">—</output>
+        </p>
+        <p class="hud-chip">
+          <span class="hud-chip__label">Blickrichtung</span>
+          <output id="pose" aria-label="Blickrichtung in Grad">203°</output>
+        </p>
+      </div>
+      <p id="status" class="visually-hidden" role="status">Anwendung wird gestartet …</p>
       <div id="permission-banner" class="permission-banner" hidden>
         <span id="permission-message">Für AR ist eine Berechtigung erforderlich.</span>
         <button id="enable-ar" type="button" class="primary">AR aktivieren</button>
-      </div>
-      <div class="scene-header">
-        <div><h1 id="scene-title">Blickrichtung</h1><p id="position">Mainz · Referenzstandort</p></div>
-        <output id="pose" aria-label="Azimut und Neigung">203° / 0°</output>
       </div>
       <p id="building-status" role="status">0 Gebäude geladen</p>
     </div>

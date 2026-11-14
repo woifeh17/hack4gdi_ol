@@ -255,26 +255,21 @@ h2 { font-size: 1.15rem; }
   pointer-events: none; /* Tipps gehen an die Kamera-Ansicht */
 }
 
-#status {
-  align-self: center;
-  max-width: 100%;
-  text-align: center;
-  color: var(--text-muted);
-  padding: .2rem 1rem;
-  border-radius: 999px;
-  background: var(--glass);
-  border: 1px solid var(--line);
-  backdrop-filter: var(--blur);
-  -webkit-backdrop-filter: var(--blur);
-  box-shadow: inset 0 1px 0 var(--glass-highlight), var(--shadow);
-}
-#hud > .scene-header {
+/* Standort und Blickrichtung als nebeneinanderliegende Glas-Chips */
+.hud-row {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: .75rem;
+  gap: .5rem;
+  justify-content: center;
   width: 100%;
-  padding: .2rem 1rem;
+}
+.hud-chip {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: .1rem;
+  margin: 0;
+  padding: 1px 1px;
   border-radius: var(--radius);
   background: var(--glass);
   border: 1px solid var(--line);
@@ -282,12 +277,33 @@ h2 { font-size: 1.15rem; }
   -webkit-backdrop-filter: var(--blur);
   box-shadow: inset 0 1px 0 var(--glass-highlight), var(--shadow);
 }
-.scene-header p { font-size: .85rem; color: var(--text-muted); }
-#pose {
+.hud-chip__label {
+  font-size: .68rem;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  color: var(--text-muted);
+}
+.hud-chip output {
+  color: var(--mint);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
-  color: var(--mint);
+  font-size: 1.05rem;
+  font-weight: 600;
 }
+/* Statusmeldungen bleiben als Live-Region für Screenreader erhalten. */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
 #building-status {
   align-self: center;
   font-size: .8rem;
