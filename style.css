@@ -316,7 +316,13 @@ h2 { font-size: 1.15rem; }
   backdrop-filter: var(--blur);
   -webkit-backdrop-filter: var(--blur);
 }
-#recording { color: var(--mint); font-weight: 600; }
+#recording {
+  grid-column: 3;
+  justify-self: start;
+  white-space: nowrap;
+  color: var(--mint);
+  font-weight: 600;
+}
 
 /* ============================================================
    Bottom sheet (Apple Maps style): peek / half / full
@@ -382,14 +388,17 @@ h2 { font-size: 1.15rem; }
 .sheet.dragging { transition: none; }
 
 /* Peek row: always visible primary controls */
+/* Drei gleiche Grid-Spalten: Der Button bleibt auch mit
+   laufender km-Anzeige exakt mittig, der Zähler füllt die rechte Spalte. */
 .sheet__peek {
   flex: none;
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
-  justify-content: center;
-  gap: .75rem;
+  column-gap: .75rem;
   padding: .5rem .8rem .8rem;
 }
+#record { grid-column: 2; justify-self: center; }
 
 /* Scrollable content */
 .sheet__body {
