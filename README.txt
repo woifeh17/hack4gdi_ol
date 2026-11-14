@@ -1,4 +1,4 @@
-WindowLens · Mainz-Test-POIs, Erweiterung Bretzenheim (39 Einträge)
+Bahnorama · Mainz-Test-POIs, Erweiterung Bretzenheim (39 Einträge)
 
 39 POIs mit OSM-Referenzen, davon 14 zusätzliche Objekte in Bretzenheim und entlang der Linie 52.
 Umkreis: maximal 5 km um 49.988163202922046, 8.227095627612766.

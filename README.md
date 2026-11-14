@@ -1,4 +1,4 @@
-# WindowLens · Bahn-Atlas
+# Bahnorama · Bahn-Atlas
 
 Mobile Web-App für georeferenzierte POIs im Kamerabild, einen persönlichen Atlas und GPS-Fahrtaufzeichnungen.
 

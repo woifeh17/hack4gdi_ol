@@ -1,4 +1,4 @@
-// WindowLens · kuratierter Mainz-Testkatalog (39 POIs, Radius 5 km um Hochschule Mainz)
+// Bahnorama · kuratierter Mainz-Testkatalog (39 POIs, Radius 5 km um Hochschule Mainz)
 // Quelle: OSM-/Mapcarta-Objekte; Links und OSM-Referenzen je POI.
 // Datenstand für die Testplanung: 2026-11-13, ergänzt um Bretzenheim.
 // LOD1/2-Geometrien sind NICHT enthalten. building.enabled=false vermeidet

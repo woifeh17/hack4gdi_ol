@@ -1,4 +1,4 @@
-# WindowLens – dynamische Gebäudegeometrien (OSM Buildings)
+# Bahnorama – dynamische Gebäudegeometrien (OSM Buildings)
 
 ## Installation im vorhandenen Repository
 
@@ -58,7 +58,7 @@ const buildingProvider = createOSMBuildingsProvider({
 
 ## Testen
 
-1. Die App auf GitHub Pages öffnen. Ohne GPS verwendet WindowLens weiterhin den Mainz-Demostandort.
+1. Die App auf GitHub Pages öffnen. Ohne GPS verwendet Bahnorama weiterhin den Mainz-Demostandort.
 2. Der manuelle Azimut `203°` blickt ungefähr in Richtung MEWA-Arena; Neigung zum Test zunächst `0°`.
 3. Netzwerkanfragen in den Entwicklertools kontrollieren. Der Browser sollte nur Kacheln in der Nähe relevanter POIs anfordern, nicht die komplette Stadt.
 4. Die Statuszeile oberhalb der Schaltflächen meldet geladene Gebäude, laufende Abrufe und fehlende Modelle.

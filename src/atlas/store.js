@@ -1,9 +1,10 @@
-const key = 'windowlens.atlas.v1';
+const key = 'bahnorama.atlas.v1';
 
 export function createAtlas(storage) {
   const read = () => {
     const target = storage ?? globalThis.localStorage;
-    const data = JSON.parse(target.getItem(key) ?? '{"objects":[],"journeys":[]}');
+    const saved = target.getItem(key) ?? target.getItem('windowlens.atlas.v1');
+    const data = JSON.parse(saved ?? '{"objects":[],"journeys":[]}');
     if (!data || !Array.isArray(data.objects) || !Array.isArray(data.journeys)) throw new Error('Atlasformat ungültig.');
     return data;
   };

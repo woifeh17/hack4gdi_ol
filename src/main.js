@@ -21,7 +21,7 @@ const currentPois = pois.map(poi => ({
   ...poi,
   ...(poiEnrichment[poi.id] ?? {}),
 }));
-console.log(`WindowLens: ${currentPois.length} POIs geladen`);
+console.log(`Bahnorama: ${currentPois.length} POIs geladen`);
 
 const atlas = createAtlas();
 const recorder = createJourneyRecorder();
@@ -113,13 +113,15 @@ Promise.all([
 ]).then(([osmManifest, lod2Manifest]) => {
   const osm = applyBuildingManifest(currentPois, osmManifest);
   const lod2 = applyLod2Manifest(currentPois, lod2Manifest);
-  console.info(`WindowLens: ${lod2} LoD2 POIs, ${osm} POIs with OSM geometry`);
+  console.info(`Bahnorama: ${lod2} LoD2 POIs, ${osm} POIs with OSM geometry`);
 });
 
 // User preferences – off by default; survive page reloads.
-const DISTANCE_STORAGE_KEY = 'windowlens.showPoiDistance.v1';
+const DISTANCE_STORAGE_KEY = 'bahnorama.showPoiDistance.v1';
 try {
-  $('show-poi-distance').checked = localStorage.getItem(DISTANCE_STORAGE_KEY) === 'true';
+  const savedDistance = localStorage.getItem(DISTANCE_STORAGE_KEY) ??
+    localStorage.getItem('windowlens.showPoiDistance.v1');
+  $('show-poi-distance').checked = savedDistance === 'true';
 } catch { /* Private mode can disallow storage. */ }
 $('show-poi-distance').addEventListener('change', () => {
   try {
@@ -134,7 +136,7 @@ glassSurfaces.addEventListener('change', () => {
   if (glassSurfaces.checked) delete document.documentElement.dataset.glass;
   else document.documentElement.dataset.glass = 'off';
   try {
-    localStorage.setItem('windowlens.glassSurfaces.v1', glassSurfaces.checked ? 'on' : 'off');
+    localStorage.setItem('bahnorama.glassSurfaces.v1', glassSurfaces.checked ? 'on' : 'off');
   } catch { /* Preference remains active for this session. */ }
 });
 

@@ -3,7 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>WindowLens · Bahnatlas</title>
+  <title>Bahnorama · Bahnatlas</title>
+  <link rel="icon" href="./favicon.ico" type="image/x-icon">
   <link rel="stylesheet" href="./style.css">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -17,7 +18,10 @@
       document.documentElement.dataset.theme = saved || (prefersLight ? "light" : "dark");
       // A saved choice takes precedence over the automatic default.
       let savedGlass;
-      try { savedGlass = localStorage.getItem("windowlens.glassSurfaces.v1"); } catch { /* Storage may be unavailable. */ }
+      try {
+        savedGlass = localStorage.getItem("bahnorama.glassSurfaces.v1") ??
+          localStorage.getItem("windowlens.glassSurfaces.v1");
+      } catch { /* Storage may be unavailable. */ }
 
       const supportsGlass = window.CSS?.supports("backdrop-filter", "blur(1px)") ||
         window.CSS?.supports("-webkit-backdrop-filter", "blur(1px)");

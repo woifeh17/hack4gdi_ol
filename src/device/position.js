@@ -57,7 +57,7 @@ export function createPosition(onUpdate) {
     console.warn('Standortzugriff verweigert:', error.code, error.message);
     const framed = window.top !== window;
     stop(framed
-      ? 'Standortzugriff verweigert. Öffne WindowLens direkt in einem Safari-Tab und tippe erneut auf „GPS aktivieren“.'
+      ? 'Standortzugriff verweigert. Öffne Bahnorama direkt in einem Safari-Tab und tippe erneut auf „GPS aktivieren“.'
       : 'Standortzugriff verweigert. Prüfe in Safari die Einstellungen dieser Website und unter Datenschutz & Sicherheit die Ortungsdienste für Safari-Websites. Tippe danach erneut auf „GPS aktivieren“.', 'denied');
   }
 
@@ -122,7 +122,7 @@ export function createPosition(onUpdate) {
       if (!navigator.geolocation || !window.isSecureContext) throw new Error('Standortzugriff benötigt einen sicheren Kontext.');
       const policy = globalThis.document?.permissionsPolicy ?? globalThis.document?.featurePolicy;
       if (policy?.allowsFeature?.('geolocation') === false) {
-        throw new Error('Standortzugriff ist in dieser Ansicht blockiert. Öffne WindowLens direkt in einem Browser-Tab.');
+        throw new Error('Standortzugriff ist in dieser Ansicht blockiert. Öffne Bahnorama direkt in einem Browser-Tab.');
       }
       retries = 0;
       if (userGesture) requestInitialFix();

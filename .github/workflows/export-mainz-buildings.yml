@@ -26,18 +26,18 @@ jobs:
       - name: Download current Geofabrik Rheinland-Pfalz OSM extract
         run: |
           curl --fail --location --retry 3 --retry-delay 10 \
-            --user-agent 'WindowLens Hack4GDI Mainz building export (GitHub Actions)' \
+            --user-agent 'Bahnorama Hack4GDI Mainz building export (GitHub Actions)' \
             --output /tmp/rheinland-pfalz.osm.pbf \
             https://download.geofabrik.de/europe/germany/rheinland-pfalz-latest.osm.pbf
       - name: Extract available building footprints
         run: python scripts/export_mainz_buildings.py /tmp/rheinland-pfalz.osm.pbf
       - name: Prepare uploadable file tree
         run: |
-          mkdir -p /tmp/windowlens-assets/assets
-          cp -a assets/buildings /tmp/windowlens-assets/assets/
+          mkdir -p /tmp/bahnorama-assets/assets
+          cp -a assets/buildings /tmp/bahnorama-assets/assets/
       - uses: actions/upload-artifact@v4
         with:
-          name: windowlens-mainz-buildings
-          path: /tmp/windowlens-assets/
+          name: bahnorama-mainz-buildings
+          path: /tmp/bahnorama-assets/
           if-no-files-found: error
           retention-days: 14

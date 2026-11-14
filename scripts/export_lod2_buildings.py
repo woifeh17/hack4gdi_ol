@@ -114,7 +114,7 @@ def download(url, destination):
     if destination.exists():
         return destination
     temp = destination.with_suffix(destination.suffix + '.part')
-    request = Request(url, headers={'User-Agent': 'WindowLens Hack4GDI building exporter'})
+    request = Request(url, headers={'User-Agent': 'Bahnorama Hack4GDI building exporter'})
     with urlopen(request, timeout=120) as response, temp.open('wb') as output:
         while chunk := response.read(1024 * 1024):
             output.write(chunk)

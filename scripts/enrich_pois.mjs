@@ -12,7 +12,7 @@ import {fileURLToPath} from 'node:url';
 import path from 'node:path';
 import {mainzTestPois} from '../src/data/mainzTestPois.js';
 
-const USER_AGENT = 'WindowLens-POI-Enrichment/1.0 (local hackathon project)';
+const USER_AGENT = 'Bahnorama-POI-Enrichment/1.0 (local hackathon project)';
 const OUTPUT_FILE = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
   '../src/data/poiEnrichment.js',

@@ -1,8 +1,8 @@
-# WindowLens: static OSM building footprints + shaded AR
+# Bahnorama: static OSM building footprints + shaded AR
 
 ## Overview
 
-This patch replaces **live OSM Buildings/Overpass calls** with **one GeoJSON file per eligible POI** hosted on the *same* GitHub Pages site as WindowLens. The AR overlay loads these geometries only when the existing `visibilityManager.js` schedules a building. No runtime OSM requests or cross-origin dependencies.
+This patch replaces **live OSM Buildings/Overpass calls** with **one GeoJSON file per eligible POI** hosted on the *same* GitHub Pages site as Bahnorama. The AR overlay loads these geometries only when the existing `visibilityManager.js` schedules a building. No runtime OSM requests or cross-origin dependencies.
 
 ### What is real and what is estimated?
 
@@ -23,7 +23,7 @@ Merge this patch's folders into the repository root **without deleting existing 
 ### Generate actual local GeoJSON assets on GitHub (recommended)
 
 1. Commit this patch to the repository, then open **Actions > Export Mainz OSM buildings > Run workflow**.
-2. The job downloads the Geofabrik Rheinland-Pfalz `.osm.pbf`, installs `osmium`, extracts tagged OSM building ways from the catalogue and uploads a downloadable artifact named **windowlens-mainz-buildings**.
+2. The job downloads the Geofabrik Rheinland-Pfalz `.osm.pbf`, installs `osmium`, extracts tagged OSM building ways from the catalogue and uploads a downloadable artifact named **bahnorama-mainz-buildings**.
 3. Download that artifact from the successful workflow run. Extract its `assets/buildings/` folder into the repository root and commit those generated files on the normal `main` branch.
 4. Once GitHub Pages rebuilds the human-uploaded commit, the manifest is fetched on startup; only successfully exported buildings are enabled. GeoJSON files are fetched on demand while exploring.
 5. Inspect the workflow log for `OK` versus `SKIP`. Some POI OSM IDs are area/grounds objects rather than building outlines; those are correctly excluded. For those POIs, identify and add an appropriate building-way ID before rerunning.
@@ -43,11 +43,11 @@ We deliberately do not have the workflow push directly using `GITHUB_TOKEN`: Git
 
 ### Copyright
 
-OpenStreetMap data © OpenStreetMap contributors, ODbL 1.0. Extract delivered by Geofabrik. Keep the existing visible OSM attribution in WindowLens.
+OpenStreetMap data © OpenStreetMap contributors, ODbL 1.0. Extract delivered by Geofabrik. Keep the existing visible OSM attribution in Bahnorama.
 
 ## Amtliche LoD2-Gebäude
 
-WindowLens lädt bevorzugt vorberechnete LoD2-Meshes aus
+Bahnorama lädt bevorzugt vorberechnete LoD2-Meshes aus
 `assets/buildings/lod2/`. Für POIs ohne LoD2-Match stehen die bereits
 vorhandenen OSM-Gebäudemodelle zur Verfügung. Die App lädt die Mesh-Kacheln
 nur bei Bedarf vom selben Server.
@@ -63,7 +63,7 @@ werden, und mehrere POIs können dasselbe Mesh referenzieren.
 
 ```bash
 python -m pip install -r scripts/requirements-lod2.txt
-python scripts/export_lod2_buildings.py --rlp --osm-ways --cache /tmp/windowlens-lod2
+python scripts/export_lod2_buildings.py --rlp --osm-ways --cache /tmp/bahnorama-lod2
 ```
 
 Alternativ lässt sich **Export Mainz LoD2 buildings** unter GitHub Actions
