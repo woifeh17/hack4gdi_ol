@@ -247,6 +247,7 @@ function stepSheet(direction) {
 // ============================================================
 let cameraRetryNeeded = false;
 let gpsRetryNeeded = false;
+let gpsMessage = '';
 let sensorNeedsGesture = false;
 let sensorStatus = 'Nicht gestartet';
 let cameraBusy = false;
@@ -265,16 +266,16 @@ function syncControls() {
 function updatePermissionBanner() {
   const needsAction = sensorNeedsGesture || cameraRetryNeeded || gpsRetryNeeded;
   $('permission-banner').hidden = !needsAction;
+  $('permission-gps').hidden = !gpsRetryNeeded || !(sensorNeedsGesture || cameraRetryNeeded);
   if (!needsAction) return;
 
-  const needs = [
-    ...(sensorNeedsGesture ? ['Bewegungssensoren'] : []),
-    ...(cameraRetryNeeded ? ['Kamera'] : []),
-    ...(gpsRetryNeeded ? ['Standort'] : []),
-  ];
-  $('permission-message').textContent =
-    `Für ${needs.join(', ')} ist eine Freigabe oder ein erneuter Start erforderlich.`;
-  $('enable-ar').textContent = 'AR aktivieren';
+  const action = sensorNeedsGesture
+    ? ['Bewegungssensoren für die AR-Ansicht freigeben.', 'Sensoren aktivieren']
+    : cameraRetryNeeded
+      ? ['Kamera für die AR-Ansicht freigeben.', 'Kamera aktivieren']
+      : [gpsMessage || 'Standort für die AR-Ansicht freigeben.', 'GPS aktivieren'];
+  $('permission-message').textContent = action[0];
+  $('enable-ar').textContent = action[1];
 }
 
 const camera = createCamera(video, active => {
@@ -290,18 +291,22 @@ const orientation = createOrientation(status => {
 });
 
 let mapCentered = false;
-function handlePositionUpdate(fix, status) {
+function handlePositionUpdate(fix, status, error) {
   // Standort-Chip zeigt nur die aktuelle Positionsgenauigkeit.
   $('position').textContent =
     fix.source === 'gps' && Number.isFinite(fix.accuracy)
       ? `±${Math.round(fix.accuracy)} m`
       : '—';
   recorder.sample(fix);
+  mapPanel?.setLocation(fix);
   if (fix.source === 'gps' && !mapCentered) {
     mapPanel?.setView(fix.lat, fix.lon);
     mapCentered = true;
   }
-  if (status.includes('Standortzugriff verweigert')) gpsRetryNeeded = true;
+  if (error) {
+    gpsRetryNeeded = true;
+    gpsMessage = status;
+  }
   if (fix.source === 'gps') gpsRetryNeeded = false;
   syncControls();
   updatePermissionBanner();
@@ -339,10 +344,12 @@ async function startCamera(facing = 'environment') {
 
 function startGps() {
   try {
-    if (!position.active) position.start();
     gpsRetryNeeded = false;
+    gpsMessage = '';
+    if (!position.active) position.start();
   } catch (error) {
     gpsRetryNeeded = true;
+    gpsMessage = error.message;
     announce(`Standort: ${error.message}`);
     console.warn('GPS nicht automatisch gestartet:', error);
   }
@@ -363,7 +370,7 @@ async function startSensors(userGesture = false) {
   // iOS requires requestPermission() from a real tap, even when site loading.
   if (typeof api.requestPermission === 'function' && !userGesture) {
     sensorNeedsGesture = true;
-    sensorStatus = 'Zum Aktivieren der Sensoren bitte „AR aktivieren“ antippen.';
+    sensorStatus = 'Zum Aktivieren der Sensoren bitte „Sensoren aktivieren“ antippen.';
     syncControls();
     updatePermissionBanner();
     return;
@@ -373,6 +380,7 @@ async function startSensors(userGesture = false) {
     // IMPORTANT: orientation.start() is called synchronously within the
     // click handler before any await (needed for iOS transient activation).
     await orientation.start();
+    if (!orientation.active) return;
     sensorNeedsGesture = false;
     sensorStatus = 'Sensoren aktiv – warte auf verwertbare Orientierung.';
     autoSwitchToSensors = true;
@@ -386,39 +394,14 @@ async function startSensors(userGesture = false) {
   }
 }
 
-// One-tap fallback for permissions blocked during automatic startup.
-// iOS zeigt Berechtigungsdialoge nur nacheinander und nur innerhalb der
-// Nutzergeste: parallele Requests führen dort zu NotAllowedError, ohne dass
-// der Nutzer einen Dialog sieht. Deshalb strikt sequenziell anfordern.
-// iOS 18: Der Sensor-Dialog wird am zuverlässigsten angezeigt und wieder
-// geschlossen, wenn requestPermission() das ERSTE Statement im Klick-Handler
-// ist (kein async-Wrapper davor). Erst danach folgen Kamera und Standort.
-let arFlowBusy = false;
+// GPS stays available even if another permission is denied.
+$('permission-gps').addEventListener('click', startGps);
+
+// Each permission starts in its own click handler, before any await.
 $('enable-ar').addEventListener('click', () => {
-  if (arFlowBusy) return;
-  arFlowBusy = true;
-  const api = window.DeviceOrientationEvent;
-  // Wichtig: synchron und direkt in der Geste anfordern.
-  const sensorPermission = (typeof api?.requestPermission === 'function' && !orientation.active)
-    ? api.requestPermission()
-    : null;
-  void (async () => {
-    try {
-      if (sensorPermission) {
-        if (await sensorPermission !== 'granted') throw new Error('Sensorberechtigung verweigert.');
-      }
-      if (!orientation.active) await startSensors(true); // Bereits erteilte Freigabe: requestPermission loest sofort ohne Dialog auf
-      if (!camera.active && !cameraBusy) await startCamera();
-      if (!position.active) startGps();
-    } catch (error) {
-      announce(`AR-Aktivierung: ${error.message}`);
-      console.warn('AR-Aktivierung fehlgeschlagen:', error);
-    } finally {
-      arFlowBusy = false;
-      syncControls();
-      updatePermissionBanner();
-    }
-  })();
+  if (sensorNeedsGesture) void startSensors(true);
+  else if (cameraRetryNeeded) void startCamera();
+  else if (gpsRetryNeeded) startGps();
 });
 
 $('camera-toggle').addEventListener('click', () => {
@@ -519,7 +502,7 @@ function showAtlas(visible) {
   syncControls();
   if (!visible) resizeMapAfterSheetChange();
 }
-$('atlas').addEventListener('click', () => showAtlas(true));
+$('atlas').addEventListener('click', () => void run(() => showAtlas(true)));
 $('explore').addEventListener('click', () => showAtlas(false));
 
 function draw() {
@@ -556,20 +539,16 @@ window.addEventListener('pagehide', () => {
   position.stop();
 });
 
-// Automatic startup: camera, geolocation and (where allowed) sensors.
-// Browsers can still prompt or deny access; the banner offers a retry.
-// Auf iOS (DeviceOrientationEvent.requestPermission existiert) KEINE
-// Freigabedialoge beim Seitenladen anfordern: Ohne direkte Nutzergeste
-// zeigt iOS 18 Safari den Dialog oft nur eingefroren an und er lässt sich
-// nicht mehr schließen. Dort läuft alles über den „AR aktivieren“-Banner.
-syncControls();
+// Browsers that require a gesture for orientation use the permission banner.
 const needsGestureForSensors = typeof window.DeviceOrientationEvent?.requestPermission === 'function';
-if (!needsGestureForSensors) {
+if (needsGestureForSensors) {
+  cameraRetryNeeded = true;
+  gpsRetryNeeded = true;
+} else {
   void (async () => {
     await startCamera();
     startGps();
   })();
 }
-// Sensoren ohne Geste nur „armieren“: startSensors(false) zeigt auf iOS
-// (DeviceOrientationEvent.requestPermission) nur den Banner.
+syncControls();
 void startSensors(false);

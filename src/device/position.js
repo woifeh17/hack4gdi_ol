@@ -22,14 +22,14 @@ export function createPosition(onUpdate) {
   let retries = 0;
   let generation = 0;
   let position = mainz;
-  const publish = (next, status) => { position = next; onUpdate(next, status); };
+  const publish = (next, status, error) => { position = next; onUpdate(next, status, error); };
 
   function armStaleTimer() {
     clearTimeout(timer);
     timer = setTimeout(() => publish(mainz, 'Standortfix veraltet. Mainz-Referenzstandort aktiv.'), STALE_FIX_MS);
   }
 
-  function stop(status = 'Mainz-Referenzstandort aktiv.') {
+  function stop(status = 'Mainz-Referenzstandort aktiv.', error) {
     generation++;
     if (watch != null) navigator.geolocation.clearWatch(watch);
     watch = null;
@@ -37,17 +37,17 @@ export function createPosition(onUpdate) {
     clearTimeout(retryTimer);
     retryTimer = null;
     retries = 0;
-    publish(mainz, status);
+    publish(mainz, status, error);
   }
 
   function beginWatch() {
     const request = ++generation;
-    publish(mainz, 'Warte auf Standortfix …');
     watch = navigator.geolocation.watchPosition(({coords, timestamp}) => {
       if (request !== generation) return;
       clearTimeout(timer);
       const {latitude: lat, longitude: lon, altitude, accuracy} = coords;
-      if (![lat, lon, accuracy].every(Number.isFinite) || accuracy > COARSE_ACCURACY_M) {
+      if (![lat, lon, accuracy, timestamp].every(Number.isFinite) ||
+          Math.abs(lat) > 90 || Math.abs(lon) > 180 || accuracy < 0 || accuracy > COARSE_ACCURACY_M) {
         // Typischer Safari-Fall, wenn „Präzise Standortortung“ für die App
         // ausgeschaltet ist: es kommen nur sehr grobe Zell-/WLAN-Fixes.
         publish(mainz, `Standort zu ungenau (±${Number.isFinite(accuracy) ? Math.round(accuracy) + ' m' : 'unbekannt'}). iOS: Präzise Standortortung für Safari aktivieren.`);
@@ -62,14 +62,13 @@ export function createPosition(onUpdate) {
       armStaleTimer();
     }, error => {
       if (request !== generation) return;
+      clearTimeout(timer);
+      const failedRequest = ++generation;
       // Tote Watch freigeben, damit ein Neustart sauber anfangen kann.
       if (watch != null) navigator.geolocation.clearWatch(watch);
       watch = null;
       if (error.code === 1) {
-        // Safari fragt nach einer einmaligen Verweigerung (oder einem abge-
-        // brochenen Dialog) nie wieder nach. Der Zustand lässt sich nur in
-        // den iOS-Einstellungen zurücksetzen – deshalb der klare Hinweis.
-        stop('Standortzugriff verweigert. iOS: Einstellungen → Apps → Safari → Standort → „Beim Verwenden der App“ erlauben, dann Seite neu laden.');
+        stop('Standortzugriff verweigert. Standortfreigabe für diese Website und in den Systemeinstellungen prüfen.', 'denied');
         return;
       }
       // Timeout (code 3) oder vorübergehend nicht verfügbar (code 2):
@@ -77,24 +76,26 @@ export function createPosition(onUpdate) {
       // blockiert hat. Watch automatisch neu starten statt aufzugeben.
       if (retries < MAX_WATCH_RETRIES) {
         retries++;
-        publish(mainz, 'Standort wird erneut angefragt …');
         retryTimer = setTimeout(() => {
           retryTimer = null;
-          if (request !== generation || watch != null) return;
+          if (failedRequest !== generation || watch != null) return;
           beginWatch();
         }, RETRY_DELAY_MS);
+        publish(mainz, 'Standort wird erneut angefragt …');
       } else {
-        publish(mainz, 'Standort nicht verfügbar. Mainz-Referenzstandort aktiv.');
+        publish(mainz, 'Standort nicht verfügbar. GPS erneut aktivieren.', 'unavailable');
       }
     }, {enableHighAccuracy: true, timeout: WATCH_TIMEOUT_MS, maximumAge: 3000});
+    publish(mainz, 'Warte auf Standortfix …');
   }
 
   return {
     get active() { return watch != null || retryTimer != null; },
     get current() { return position; },
     start() {
-      if (watch != null) return;
+      if (watch != null || retryTimer != null) return;
       if (!navigator.geolocation || !window.isSecureContext) throw new Error('Standortzugriff benötigt einen sicheren Kontext.');
+      retries = 0;
       beginWatch();
     },
     stop,

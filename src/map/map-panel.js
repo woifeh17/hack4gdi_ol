@@ -95,19 +95,6 @@ export function createMapPanel(parent, options = {}) {
     routeBar.classList.toggle('map-route-bar--collapsed', collapsed);
     barToggle.setAttribute('aria-expanded', String(!collapsed));
     barToggle.setAttribute('aria-label', collapsed ? 'Suchleiste ausklappen' : 'Suchleiste einklappen');
-    barToggle.textContent = collapsed ? '▼ Suche' : '▲ Suche';
-    
-    // Höhe der routeBar anpassen, damit die Karte Platz hat
-    const barHeight = collapsed ? 32 : 40;
-    mapEl.style.height = `calc(100% - ${barHeight}px)`;
-    setTimeout(() => map.invalidateSize(), 50);
-  }
-
-
-  function setBarCollapsed(collapsed) {
-    routeBar.classList.toggle('map-route-bar--collapsed', collapsed);
-    barToggle.setAttribute('aria-expanded', String(!collapsed));
-    barToggle.setAttribute('aria-label', collapsed ? 'Suchleiste ausklappen' : 'Suchleiste einklappen');
     barToggle.textContent = collapsed ? '▼' : '▲';
     // Nach dem Umklappen die Karte neu berechnen
     setTimeout(() => map.invalidateSize(), 100);
@@ -346,7 +333,6 @@ export function createMapPanel(parent, options = {}) {
   const locationLayer = L.layerGroup().addTo(map);
   let locationMarker = null;
   let lastLocation = null; // [lat, lon]
-  let watchId = null;
 
   // Button "Auf Standort zoomen", aktiv sobald ein Standort vorliegt
   const locateButton = document.createElement('button');
@@ -382,18 +368,6 @@ export function createMapPanel(parent, options = {}) {
 
   locateButton.addEventListener('click', zoomToLocation);
 
-  if ('geolocation' in navigator) {
-    watchId = navigator.geolocation.watchPosition(
-      (pos) => showLocation(pos.coords.latitude, pos.coords.longitude),
-      (err) => {
-        locateButton.title = `Standort nicht verfügbar: ${err.message}`;
-      },
-      { enableHighAccuracy: true, maximumAge: 10000 }
-    );
-  } else {
-    locateButton.title = 'Der Browser unterstützt keine Standortabfrage.';
-  }
-
   function addStations(data) {
     indexStations(data); // nur für die Suche, nicht zeichnen
   }
@@ -411,6 +385,15 @@ export function createMapPanel(parent, options = {}) {
   routeBar.addEventListener('change', updateSelectionFromInputs);
 
   return {
+    setLocation(fix) {
+      if (fix?.source === 'gps') showLocation(fix.lat, fix.lon);
+      else {
+        locationLayer.clearLayers();
+        locationMarker = null;
+        lastLocation = null;
+        locateButton.disabled = true;
+      }
+    },
     setPois,
     setOpen,
     addGeoJson,
@@ -418,7 +401,6 @@ export function createMapPanel(parent, options = {}) {
     invalidate: () => map.invalidateSize(),
     setView: (lat, lon, z) => map.setView([lat, lon], z ?? map.getZoom()),
     destroy() {
-      if (watchId !== null) navigator.geolocation.clearWatch(watchId);
       ro.disconnect();
       map.remove();
       root.remove();

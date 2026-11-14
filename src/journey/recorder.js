@@ -11,7 +11,10 @@ export function createJourneyRecorder() {
     },
     sample(fix) {
       if (!journey) return;
-      if (fix.source !== 'gps' || fix.accuracy > 50) {
+      if (!fix || fix.source !== 'gps' ||
+          ![fix.lat, fix.lon, fix.accuracy, fix.timestamp].every(Number.isFinite) ||
+          Math.abs(fix.lat) > 90 || Math.abs(fix.lon) > 180 ||
+          fix.accuracy < 0 || fix.accuracy > 50) {
         previous = null;
         return;
       }
