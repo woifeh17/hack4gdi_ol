@@ -208,7 +208,7 @@ button {
   font: inherit;
   border: 1px solid var(--glass-border);
   border-radius: 999px;
-  padding: .55rem 1.1rem;
+  padding: .1rem 1rem;
   color: inherit;
   cursor: pointer;
   background: var(--glass);
@@ -471,7 +471,7 @@ input[type="number"] {
 .stats { display: flex; gap: .9rem; flex-wrap: wrap; }
 .stats strong { color: var(--mint); display: block; font-size: 2rem; letter-spacing: -.02em; }
 [data-theme="dark"] .stats strong { text-shadow: 0 0 24px rgba(0, 255, 220, 0.35); }
-#dashboard ul { padding-left: 1.2rem; }
+#dashboard ul { padding-left: 1.2rem;   margin-bottom: 5px}
 
 /* --- Dialog ---------------------------------------------------- */
 dialog {
