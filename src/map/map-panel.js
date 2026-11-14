@@ -62,15 +62,6 @@ export function createMapPanel(parent, options = {}) {
     toggle.setAttribute('aria-expanded', String(open));
     toggle.setAttribute('aria-label', open ? 'Karte verkleinern' : 'Karte vergrößern');
     toggle.textContent = open ? '✕' : '🗺';
-    // Höhe zurücksetzen, wenn die Karte geschlossen wird
-    if (!open) {
-      mapEl.style.height = '';
-    } else {
-      // Wenn die Karte geöffnet wird, Höhe basierend auf routeBar Zustand anpassen
-      const isCollapsed = routeBar.classList.contains('map-route-bar--collapsed');
-      const barHeight = isCollapsed ? 32 : 40;
-      mapEl.style.height = `calc(100% - ${barHeight}px)`;
-    }
     setTimeout(() => map.invalidateSize(), 50);
   }
 

@@ -158,6 +158,12 @@ function setSheetState(state) {
   sheet.className = `sheet sheet--${state}`;
   grabber.setAttribute('aria-expanded', String(state !== 'peek'));
   sheetBody.inert = state === 'peek';
+  
+  // Bei full Sheet: Karte auf volle Höhe ausdehnen
+  if (mapPanel) {
+    mapPanel.setOpen(state === 'full');
+  }
+  
   resizeMapAfterSheetChange();
 }
 

@@ -1,4 +1,4 @@
-/* ============================================================
+﻿/* ============================================================
    WindowLens · Bahn-Atlas — Liquid Glass Edition
    Apple-Maps-Style: Vollbild-Kamera + Bottom-Sheet.
    Themes: :root = dark, [data-theme="light"] = light.
@@ -433,11 +433,23 @@ input[type="number"] {
 }
 
 /* --- Map inside the sheet -------------------------------------- */
-#map-panel { position: static; width: auto; height: auto; }
+#map-panel {
+  position: static;
+  width: 100%;
+  height: 240px;
+  margin-bottom: 1rem;
+}
+
+/* Bei vollem Sheet: Karte fuellt die gesamte Hoehe des Sheet-Body */
+.sheet--full #map-panel {
+  height: 100%;
+  margin-bottom: 0;
+}
+
 .map-panel {
   position: relative;
   width: 100%;
-  height: 240px;
+  height: 100%;
   border-radius: var(--radius);
   overflow: hidden;
   border: 1px solid var(--glass-border);
@@ -445,20 +457,34 @@ input[type="number"] {
   box-shadow: inset 0 1px 0 var(--glass-highlight);
   z-index: auto;
 }
-.map-panel--open { width: 100%; height: min(60vh, 420px); }
-.map-panel__map { width: 100%; height: 100%; border-radius: inherit; }
-.map-panel__toggle {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  z-index: 5;
-  width: 32px;
-  height: 32px;
-  padding: 0;
-  border-radius: 10px;
-  font-size: 16px;
-  line-height: 30px;
+
+/* Standardhoehe wenn nicht im full-Sheet */
+:not(.sheet--full) .map-panel {
+  height: 240px;
 }
+
+.map-panel--open {
+  width: 100%;
+}
+
+.sheet--full .map-panel--open {
+  height: 100%;
+}
+
+.map-panel__map {
+  width: 100%;
+  height: calc(100% - 32px);
+  border-radius: inherit;
+}
+
+.sheet--full .map-panel__map {
+  height: calc(100% - 32px);
+}
+
+.map-route-bar:not(.map-route-bar--collapsed) + .map-panel__map {
+  height: calc(100% - 40px);
+}
+
 
 /* --- Atlas dashboard (opaque, scrollable) ---------------------- */
 #dashboard {
