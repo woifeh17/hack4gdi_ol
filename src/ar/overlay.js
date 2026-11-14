@@ -100,12 +100,32 @@ export function createOverlay(
       lastPosition = position;
     }
 
-    const videoAspect = video.classList.contains('active') && video.videoHeight
-      ? video.videoWidth / video.videoHeight : width / height;
-    const frameWidth = Math.min(width, height * videoAspect);
-    const frameHeight = Math.min(height, width / videoAspect);
-    const frameLeft = (width - frameWidth) / 2;
-    const frameTop = (height - frameHeight) / 2;
+    // Kamerabild selbst randabdeckend („cover“) in den Canvas zeichnen.
+    // Manche Browser – insbesondere Firefox auf iOS – wenden object-fit: cover
+    // auf dem <video>-Element nicht zuverlässig an und zeigen das Bild klein
+    // und eingepasst statt vollflächig. Der Canvas liegt über dem Video-Element,
+    // das gezeichnete Bild füllt die ganze Fläche und deckt alles darunter ab.
+    if (video.classList.contains('active') && video.videoWidth && video.videoHeight) {
+      const videoAspect = video.videoWidth / video.videoHeight;
+      const canvasAspect = width / height;
+      // Seiten des Quellvideos beschneiden, damit kein Verzerren entsteht.
+      let sx = 1, sy = 1;
+      if (canvasAspect > videoAspect) sy = videoAspect / canvasAspect;
+      else sx = canvasAspect / videoAspect;
+      ctx.drawImage(
+        video,
+        (1 - sx) / 2 * video.videoWidth, (1 - sy) / 2 * video.videoHeight,
+        sx * video.videoWidth, sy * video.videoHeight,
+        0, 0, width, height
+      );
+    }
+    // Das sichtbare Kamerabild füllt den gesamten Canvas randabdeckend;
+    // POI-Projektion und Beschriftungen nutzen deshalb die volle Fläche
+    // (statt wie zuvor nur einen eingepassten Letterbox-Rahmen).
+    const frameWidth = width;
+    const frameHeight = height;
+    const frameLeft = 0;
+    const frameTop = 0;
     const screenX = point => frameLeft + point.x * frameWidth;
     const screenY = point => frameTop + point.y * frameHeight;
 

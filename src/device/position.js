@@ -3,7 +3,7 @@ export const mainz = Object.freeze({lat: 49.988163202922046, lon: 8.227095627612
 // Grobe Fixes (z. B. Zellortung beim ersten iPhone-Fix) werden akzeptiert
 // und nur markiert; erst oberhalb dieser Schwelle fällt die App auf den
 // Mainz-Referenzpunkt zurück.
-const COARSE_ACCURACY_M = 2000;
+const COARSE_ACCURACY_M = 5000;
 const FINE_ACCURACY_M = 500;
 
 // iOS: Die Watch-Timeout läuft bereits, während der Freigabedialog offen
@@ -48,7 +48,9 @@ export function createPosition(onUpdate) {
       clearTimeout(timer);
       const {latitude: lat, longitude: lon, altitude, accuracy} = coords;
       if (![lat, lon, accuracy].every(Number.isFinite) || accuracy > COARSE_ACCURACY_M) {
-        publish(mainz, 'Standort zu ungenau. Mainz-Referenzstandort aktiv.');
+        // Typischer Safari-Fall, wenn „Präzise Standortortung“ für die App
+        // ausgeschaltet ist: es kommen nur sehr grobe Zell-/WLAN-Fixes.
+        publish(mainz, `Standort zu ungenau (±${Number.isFinite(accuracy) ? Math.round(accuracy) + ' m' : 'unbekannt'}). iOS: Präzise Standortortung für Safari aktivieren.`);
         return;
       }
       // Einen groben ersten Fix nutzen statt ihn zu verwerfen:
@@ -64,7 +66,10 @@ export function createPosition(onUpdate) {
       if (watch != null) navigator.geolocation.clearWatch(watch);
       watch = null;
       if (error.code === 1) {
-        stop('Standortzugriff verweigert. Mainz-Referenzstandort aktiv.');
+        // Safari fragt nach einer einmaligen Verweigerung (oder einem abge-
+        // brochenen Dialog) nie wieder nach. Der Zustand lässt sich nur in
+        // den iOS-Einstellungen zurücksetzen – deshalb der klare Hinweis.
+        stop('Standortzugriff verweigert. iOS: Einstellungen → Apps → Safari → Standort → „Beim Verwenden der App“ erlauben, dann Seite neu laden.');
         return;
       }
       // Timeout (code 3) oder vorübergehend nicht verfügbar (code 2):
