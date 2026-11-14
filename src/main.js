@@ -267,6 +267,9 @@ function updatePermissionBanner() {
   const needsAction = sensorNeedsGesture || cameraRetryNeeded || gpsRetryNeeded;
   $('permission-banner').hidden = !needsAction;
   $('permission-gps').hidden = !gpsRetryNeeded || !(sensorNeedsGesture || cameraRetryNeeded);
+  const gpsStatus = $('permission-gps-status');
+  gpsStatus.textContent = $('permission-gps').hidden ? '' : gpsMessage;
+  gpsStatus.hidden = !gpsStatus.textContent;
   if (!needsAction) return;
 
   const action = sensorNeedsGesture
@@ -342,11 +345,11 @@ async function startCamera(facing = 'environment') {
   }
 }
 
-function startGps() {
+function startGps(userGesture = false) {
   try {
     gpsRetryNeeded = false;
     gpsMessage = '';
-    if (!position.active) position.start();
+    if (!position.active) position.start({userGesture});
   } catch (error) {
     gpsRetryNeeded = true;
     gpsMessage = error.message;
@@ -395,13 +398,13 @@ async function startSensors(userGesture = false) {
 }
 
 // GPS stays available even if another permission is denied.
-$('permission-gps').addEventListener('click', startGps);
+$('permission-gps').addEventListener('click', () => startGps(true));
 
 // Each permission starts in its own click handler, before any await.
 $('enable-ar').addEventListener('click', () => {
   if (sensorNeedsGesture) void startSensors(true);
   else if (cameraRetryNeeded) void startCamera();
-  else if (gpsRetryNeeded) startGps();
+  else if (gpsRetryNeeded) startGps(true);
 });
 
 $('camera-toggle').addEventListener('click', () => {
@@ -426,7 +429,7 @@ $('gps').addEventListener('click', () => {
     gpsRetryNeeded = false;
     syncControls();
     updatePermissionBanner();
-  } else startGps();
+  } else startGps(true);
 });
 $('sensors').addEventListener('click', () => {
   if (orientation.active) {
@@ -479,7 +482,7 @@ $('record').addEventListener('click', () => void run(() => {
     recorder.finish(trip => atlas.saveJourney(trip));
     announce(hasPoints ? 'Fahrt im Atlas gespeichert.' : 'Keine verwertbaren Standortpunkte empfangen.');
   } else {
-    if (!position.active) startGps();
+    if (!position.active) startGps(true);
     recorder.start();
     recorder.sample(position.current);
     announce('Fahrtaufzeichnung läuft.');

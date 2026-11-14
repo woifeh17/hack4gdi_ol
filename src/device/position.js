@@ -6,10 +6,6 @@ export const mainz = Object.freeze({lat: 49.988163202922046, lon: 8.227095627612
 const COARSE_ACCURACY_M = 5000;
 const FINE_ACCURACY_M = 500;
 
-// iOS: Die Watch-Timeout läuft bereits, während der Freigabedialog offen
-// ist. 12 s sind dort zu knapp – der erste Fix kommt oft erst nach der
-// Bestätigung, die Watch ist intern aber schon abgelaufen. Großzügiger
-// Timeout plus automatischer Neustart der Watch bei Timeout/Abbruch.
 const WATCH_TIMEOUT_MS = 30000;
 const RETRY_DELAY_MS = 2000;
 const MAX_WATCH_RETRIES = 5;
@@ -17,6 +13,7 @@ const STALE_FIX_MS = 30000;
 
 export function createPosition(onUpdate) {
   let watch;
+  let locating = false;
   let timer;
   let retryTimer;
   let retries = 0;
@@ -31,6 +28,7 @@ export function createPosition(onUpdate) {
 
   function stop(status = 'Mainz-Referenzstandort aktiv.', error) {
     generation++;
+    locating = false;
     if (watch != null) navigator.geolocation.clearWatch(watch);
     watch = null;
     clearTimeout(timer);
@@ -40,26 +38,33 @@ export function createPosition(onUpdate) {
     publish(mainz, status, error);
   }
 
+  function acceptFix({coords, timestamp}) {
+    clearTimeout(timer);
+    const {latitude: lat, longitude: lon, altitude, accuracy} = coords;
+    if (![lat, lon, accuracy, timestamp].every(Number.isFinite) ||
+        Math.abs(lat) > 90 || Math.abs(lon) > 180 || accuracy < 0 || accuracy > COARSE_ACCURACY_M) {
+      publish(mainz, 'Standort zu ungenau. Prüfe, ob der Browser den präzisen Standort verwenden darf.');
+      return;
+    }
+    retries = 0;
+    const coarse = accuracy > FINE_ACCURACY_M;
+    publish({lat, lon, altitude, accuracy, timestamp, source: 'gps', coarse},
+      coarse ? `Standort grob · ±${Math.round(accuracy)} m` : `Standort aktiv · ±${Math.round(accuracy)} m`);
+    armStaleTimer();
+  }
+
+  function denyLocation(error) {
+    console.warn('Standortzugriff verweigert:', error.code, error.message);
+    const framed = window.top !== window;
+    stop(framed
+      ? 'Standortzugriff verweigert. Öffne WindowLens direkt in einem Safari-Tab und tippe erneut auf „GPS aktivieren“.'
+      : 'Standortzugriff verweigert. Prüfe in Safari die Einstellungen dieser Website und unter Datenschutz & Sicherheit die Ortungsdienste für Safari-Websites. Tippe danach erneut auf „GPS aktivieren“.', 'denied');
+  }
+
   function beginWatch() {
     const request = ++generation;
-    watch = navigator.geolocation.watchPosition(({coords, timestamp}) => {
-      if (request !== generation) return;
-      clearTimeout(timer);
-      const {latitude: lat, longitude: lon, altitude, accuracy} = coords;
-      if (![lat, lon, accuracy, timestamp].every(Number.isFinite) ||
-          Math.abs(lat) > 90 || Math.abs(lon) > 180 || accuracy < 0 || accuracy > COARSE_ACCURACY_M) {
-        // Typischer Safari-Fall, wenn „Präzise Standortortung“ für die App
-        // ausgeschaltet ist: es kommen nur sehr grobe Zell-/WLAN-Fixes.
-        publish(mainz, `Standort zu ungenau (±${Number.isFinite(accuracy) ? Math.round(accuracy) + ' m' : 'unbekannt'}). iOS: Präzise Standortortung für Safari aktivieren.`);
-        return;
-      }
-      // Einen groben ersten Fix nutzen statt ihn zu verwerfen:
-      // Die AR-Szene bleibt sonst am Hardcode-Punkt in Mainz „kleben“.
-      retries = 0;
-      const coarse = accuracy > FINE_ACCURACY_M;
-      publish({lat, lon, altitude, accuracy, timestamp, source: 'gps', coarse},
-        coarse ? `Standort grob · ±${Math.round(accuracy)} m` : `Standort aktiv · ±${Math.round(accuracy)} m`);
-      armStaleTimer();
+    watch = navigator.geolocation.watchPosition(fix => {
+      if (request === generation) acceptFix(fix);
     }, error => {
       if (request !== generation) return;
       clearTimeout(timer);
@@ -68,12 +73,9 @@ export function createPosition(onUpdate) {
       if (watch != null) navigator.geolocation.clearWatch(watch);
       watch = null;
       if (error.code === 1) {
-        stop('Standortzugriff verweigert. Standortfreigabe für diese Website und in den Systemeinstellungen prüfen.', 'denied');
+        denyLocation(error);
         return;
       }
-      // Timeout (code 3) oder vorübergehend nicht verfügbar (code 2):
-      // Auf iOS passiert das oft, weil der Freigabedialog die erste Anfrage
-      // blockiert hat. Watch automatisch neu starten statt aufzugeben.
       if (retries < MAX_WATCH_RETRIES) {
         retries++;
         retryTimer = setTimeout(() => {
@@ -86,17 +88,45 @@ export function createPosition(onUpdate) {
         publish(mainz, 'Standort nicht verfügbar. GPS erneut aktivieren.', 'unavailable');
       }
     }, {enableHighAccuracy: true, timeout: WATCH_TIMEOUT_MS, maximumAge: 3000});
-    publish(mainz, 'Warte auf Standortfix …');
+    if (position.source !== 'gps') publish(mainz, 'Warte auf Standortfix …');
+  }
+
+  function requestInitialFix() {
+    const request = ++generation;
+    locating = true;
+    try {
+      navigator.geolocation.getCurrentPosition(fix => {
+        if (request !== generation) return;
+        acceptFix(fix);
+        if (request !== generation) return;
+        locating = false;
+        beginWatch();
+      }, error => {
+        if (request !== generation) return;
+        locating = false;
+        if (error.code === 1) denyLocation(error);
+        else beginWatch();
+      }, {enableHighAccuracy: false, timeout: WATCH_TIMEOUT_MS, maximumAge: 3000});
+    } catch (error) {
+      locating = false;
+      throw error;
+    }
+    publish(mainz, 'Warte auf Standortfreigabe oder Standortfix …');
   }
 
   return {
-    get active() { return watch != null || retryTimer != null; },
+    get active() { return locating || watch != null || retryTimer != null; },
     get current() { return position; },
-    start() {
-      if (watch != null || retryTimer != null) return;
+    start({userGesture = false} = {}) {
+      if (locating || watch != null || retryTimer != null) return;
       if (!navigator.geolocation || !window.isSecureContext) throw new Error('Standortzugriff benötigt einen sicheren Kontext.');
+      const policy = globalThis.document?.permissionsPolicy ?? globalThis.document?.featurePolicy;
+      if (policy?.allowsFeature?.('geolocation') === false) {
+        throw new Error('Standortzugriff ist in dieser Ansicht blockiert. Öffne WindowLens direkt in einem Browser-Tab.');
+      }
       retries = 0;
-      beginWatch();
+      if (userGesture) requestInitialFix();
+      else beginWatch();
     },
     stop,
   };
