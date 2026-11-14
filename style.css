@@ -832,17 +832,11 @@ a { color: var(--mint); }
   font-size: 0.85em;
 }
 
-/* --- Kartenlegende: gesammelt vs. offen ------------------------ */
 .map-legend {
-  position: absolute;
-  left: 8px;
-  bottom: 8px;
-  z-index: 1000;
   display: flex;
-  flex-wrap: wrap;
-  gap: .25rem .7rem;
-  align-items: center;
-  margin: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: .25rem;
   padding: 4px 8px;
   border-radius: 6px;
   background: rgba(255, 255, 255, 0.95);
@@ -850,13 +844,16 @@ a { color: var(--mint); }
   color: #1e293b;
   font-size: .72rem;
   line-height: 1.2;
+  text-align: left;
   pointer-events: none;
 }
 
 .map-legend__item {
-  display: inline-flex;
+  display: flex;
   align-items: center;
+  justify-content: flex-start;
   gap: .3rem;
+  width: 100%;
 }
 
 .map-legend__dot {

@@ -6,6 +6,15 @@ const DEFAULT_CENTER = [49.9881632, 8.2270956];
 const DEFAULT_ZOOM = 9;
 
 /**
+ * Pflichtangabe für die Datenquelle (Lizenz CC BY 4.0).
+ * Herausgeber und ggf. Hinweis auf Bearbeitung anhand des Angebots prüfen und ergänzen.
+ */
+const DATA_ATTRIBUTION =
+  'Daten: <a href="https://mobilithek.info/offers/922109165921083392" target="_blank" rel="noopener">Mobilithek</a>' +
+  ' (Deutsche Bahn AG), <a href="https://creativecommons.org/licenses/by/4.0/deed.de" target="_blank" rel="noopener">CC BY 4.0</a>';
+
+
+/**
  * @param {HTMLElement} parent  Container, in den die Karte eingehängt wird
  * @param {object} options
  * @param {Array<{id, name, lat, lon}>} [options.pois]
@@ -47,6 +56,15 @@ export function createMapPanel(parent, options = {}) {
     attribution: options.basemapAttribution ?? '&copy; Esri',
   }).addTo(map);
 
+  // Attribution nimmt nur den Platz rechts neben der Legende ein (Legende ca. 130 px)
+  const attributionEl = map.attributionControl.getContainer();
+  const fitAttribution = () => {
+    attributionEl.style.maxWidth = Math.max(120, map.getSize().x - 130) + 'px';
+  };
+  fitAttribution();
+  map.on('resize', fitAttribution);
+
+
   // Eigene Ebene für Linien, liegt unter den POI-Markern
   const railPane = map.createPane('rail');
   railPane.style.zIndex = 350;
@@ -73,15 +91,23 @@ export function createMapPanel(parent, options = {}) {
   root.appendChild(routeBar);
   L.DomEvent.disableClickPropagation(routeBar);
 
-  // Legende: gesammelte POIs vs. noch offene POIs.
-  const legend = document.createElement('div');
-  legend.className = 'map-legend';
-  legend.setAttribute('aria-hidden', 'true');
-  legend.innerHTML = `
-    <span class="map-legend__item"><span class="map-legend__dot map-legend__dot--collected"></span>Im Atlas</span>
-    <span class="map-legend__item"><span class="map-legend__dot map-legend__dot--open"></span>Unbekannt</span>
-  `;
-  root.appendChild(legend);
+   // Legende als Leaflet-Control unten links. Leaflet ordnet Controls in einer
+  // Ecke automatisch untereinander an, dadurch gibt es keine Überlappung mehr.
+  const LegendControl = L.Control.extend({
+    options: { position: 'bottomleft' },
+    onAdd() {
+      const container = L.DomUtil.create('div', 'leaflet-control map-legend');
+      container.setAttribute('aria-hidden', 'true');
+      container.innerHTML = `
+        <span class="map-legend__item"><span class="map-legend__dot map-legend__dot--collected"></span>Im Atlas</span>
+        <span class="map-legend__item"><span class="map-legend__dot map-legend__dot--open"></span>Unbekannt</span>
+      `;
+      L.DomEvent.disableClickPropagation(container);
+      return container;
+    },
+  });
+
+  new LegendControl().addTo(map);
 
   // Leiste ein- und ausklappen. Der Schalter sitzt in der Leiste selbst,
   // damit er zusammen mit ihr ein- und ausgeblendet wird.
@@ -250,6 +276,7 @@ export function createMapPanel(parent, options = {}) {
       renderer: L.canvas({ pane: 'rail' }),
     }).addTo(map);
     railLayers.push(layer);
+    map.attributionControl.addAttribution(options.dataAttribution ?? DATA_ATTRIBUTION);
     return layer;
   }
 
@@ -429,6 +456,7 @@ export function createMapPanel(parent, options = {}) {
 
   function addStations(data) {
     indexStations(data); // nur für die Suche, nicht zeichnen
+    map.attributionControl.addAttribution(options.dataAttribution ?? DATA_ATTRIBUTION);
   }
 
   function updateSelectionFromInputs() {
