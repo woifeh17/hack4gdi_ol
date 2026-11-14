@@ -2,5 +2,5 @@
   "name": "windowlens",
   "private": true,
   "type": "module",
-  "scripts": { "test": "node --test" }
+  "scripts": { "test": "node --test", "enrich-pois": "node scripts/enrich_pois.mjs" }
 }

@@ -5,6 +5,7 @@ import {createPoseProvider} from './ar/pose.js';
 import {createOverlay} from './ar/overlay.js';
 import {createMapPanel} from './map/map-panel.js';
 import {pois} from './data/mainzTestPois.js';
+import {poiEnrichment} from './data/poiEnrichment.js';
 import {createPoiDetails} from './data/details.js';
 import {createAtlas} from './atlas/store.js';
 import {renderDashboard} from './atlas/view.js';
@@ -16,7 +17,10 @@ import {createBuildingStream} from './poi/visibilityManager.js';
 
 const $ = id => document.getElementById(id);
 const announce = message => { $('status').textContent = message; };
-const currentPois = pois;
+const currentPois = pois.map(poi => ({
+  ...poi,
+  ...(poiEnrichment[poi.id] ?? {}),
+}));
 console.log(`WindowLens: ${currentPois.length} POIs geladen`);
 
 const atlas = createAtlas();
@@ -32,7 +36,7 @@ const syncCollectedPois = () => mapPanel?.setCollected(collectedPoiIds());
 const openPoi = createPoiDetails($('poi-dialog'), id => {
   atlas.collect(id);
   syncCollectedPois();
-}, announce);
+}, announce, id => collectedPoiIds().includes(id));
 const video = $('camera');
 const stage = $('scene-stage');
 const sheet = $('sheet');
