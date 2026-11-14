@@ -397,17 +397,27 @@ export function createMapPanel(parent, options = {}) {
     setLocateEnabled(true);
   }
 
+  function clearLocation() {
+    lastLocation = null;
+    setLocateEnabled(false);
+    locationLayer.clearLayers();
+    locationMarker = null;
+  }
+
   // Standort kommt vom zentralen Position-Service in main.js, damit es nur
   // eine Geolocation-Anfrage und einen Berechtigungsdialog gibt.
-  function setLocation(lat, lon) {
-    if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
-      lastLocation = null;
-      setLocateEnabled(false);
-      locationLayer.clearLayers();
-      locationMarker = null;
+  // Unterstützt sowohl setLocation(lat, lon) als auch setLocation(fix).
+  function setLocation(latOrFix, lon) {
+    if (latOrFix && typeof latOrFix === 'object') {
+      if (latOrFix.source === 'gps') setLocation(latOrFix.lat, latOrFix.lon);
+      else clearLocation();
       return;
     }
-    showLocation(lat, lon);
+    if (!Number.isFinite(latOrFix) || !Number.isFinite(lon)) {
+      clearLocation();
+      return;
+    }
+    showLocation(latOrFix, lon);
   }
 
   function zoomToLocation() {

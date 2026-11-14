@@ -10,6 +10,7 @@ export function applyLod2Manifest(pois, manifest) {
   for (const poi of pois) {
     const links = manifest.pois?.[poi.id];
     if (!Array.isArray(links) || !links.length) continue;
+    if (!links.every(link => Array.isArray(link) && link.length === 2 && typeof link[1] === 'string')) continue;
     const refs = links.map(([tile, id]) => ({file: manifest.tiles?.[tile], id}));
     if (!refs.every(({file}) => /^\d+-\d+-\d+-[a-f0-9]{16}\.json$/.test(file))) continue;
     poi.building = {...poi.building, enabled: true, lod2: refs};
@@ -48,7 +49,7 @@ export function createLod2BuildingProvider(fallback, {
       tiles.set(file, cached);
       return cached;
     }
-    const request = fetchFn(new URL(ASSET_ROOT + file, baseUrl).href).then(async response => {
+    const request = fetchFn(new URL(ASSET_ROOT + file, baseUrl).href, {signal: AbortSignal.timeout(20000)}).then(async response => {
       if (!response.ok) throw new Error(`LoD2 tile ${file}: HTTP ${response.status}`);
       const tile = await response.json();
       if (tile.version !== 1 || !tile.buildings) throw new Error(`Invalid LoD2 tile ${file}`);

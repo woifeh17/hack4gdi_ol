@@ -153,7 +153,6 @@ export function createOverlay(
     });
 
     candidates.sort((a, b) =>
-      Number(previouslyVisible.has(b.poi.id)) - Number(previouslyVisible.has(a.poi.id)) ||
       a.score - b.score ||
       a.relative.distance - b.relative.distance ||
       String(a.poi.id).localeCompare(String(b.poi.id)));
