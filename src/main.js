@@ -169,6 +169,9 @@ const renderOverlay = createOverlay(
 // ============================================================
 const grabber = $('sheet-grabber');
 const sheetBody = $('sheet-body');
+// HUD-Chips (Standort/Blickrichtung), die über dem Sheet schweben.
+const hudDock = $('hud-dock');
+const hudHeader = document.querySelector('.header');
 const SHEET_STATES = ['peek', 'half', 'full'];
 let sheetState = 'peek';
 let sheetTimer = null;
@@ -189,6 +192,8 @@ function setSheetState(state) {
   sheet.className = `sheet sheet--${state}`;
   grabber.setAttribute('aria-expanded', String(state !== 'peek'));
   sheetBody.inert = state === 'peek';
+  // Voll ausgefahren: HUD-Chips verschwinden garantiert.
+  hudDock.classList.toggle('hud-dock--hidden', state === 'full');
 
   // Bei full Sheet: Karte auf volle Höhe ausdehnen
   if (mapPanel) {
@@ -544,6 +549,23 @@ function showAtlas(visible) {
 $('atlas').addEventListener('click', () => void run(() => showAtlas(true)));
 $('explore').addEventListener('click', () => showAtlas(false));
 
+// ============================================================
+// HUD-Dock: Standort- und Blickrichtungs-Chips folgen dem Sheet.
+// `bottom` wird jeden Frame aus der sichtbaren Sheet-Höhe
+// berechnet, dadurch bewegen sich die Chips auch beim Ziehen
+// live mit. Im Full-Zustand und ohne Platz über dem Sheet
+// werden sie ausgeblendet.
+// ============================================================
+function trackHudOverSheet() {
+  const sheetTop = sheet.getBoundingClientRect().top;
+  hudDock.style.bottom = `calc(${window.innerHeight - sheetTop}px + .75rem)`;
+  const room = sheetTop - (hudHeader ? hudHeader.getBoundingClientRect().bottom : 0);
+  hudDock.classList.toggle(
+    'hud-dock--hidden',
+    sheetState === 'full' || room < hudDock.offsetHeight + 16
+  );
+}
+
 function draw() {
   if (!$('scene').hidden) {
     // Switch from demonstration heading to real absolute orientation only
@@ -568,6 +590,7 @@ function draw() {
     $('recording').textContent = recorder.current
       ? `${(recorder.current.distanceM / 1000).toFixed(2)} km` : '';
   }
+  trackHudOverSheet();
   requestAnimationFrame(draw);
 }
 requestAnimationFrame(draw);
