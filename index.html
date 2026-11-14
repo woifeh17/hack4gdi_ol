@@ -137,12 +137,44 @@
   </section>
 
   <dialog id="poi-dialog" aria-labelledby="poi-title">
-    <form method="dialog"><button class="close" aria-label="Details schließen">×</button></form>
-    <h2 id="poi-title"></h2><p data-description></p><p data-coordinates></p>
-    <div data-photos></div>
-    <p><a data-source target="_blank" rel="noopener noreferrer">Quelle und weitere Informationen ↗</a></p>
-    <p data-error role="alert"></p>
-    <button class="primary" data-collect>Zum Atlas hinzufügen</button>
+    <form method="dialog" class="poi-dialog__close">
+      <button class="close" aria-label="Details schließen">×</button>
+    </form>
+
+    <header class="poi-dialog__header">
+      <p class="poi-dialog__eyebrow">
+        <span class="poi-chip" data-category hidden></span>
+        <span class="poi-chip poi-chip--muted" data-area hidden></span>
+        <span class="poi-chip poi-chip--atlas" data-atlas-status hidden>Im Atlas</span>
+      </p>
+      <h2 id="poi-title"></h2>
+      <p class="poi-dialog__subtitle" data-subtitle hidden></p>
+    </header>
+
+    <div class="poi-dialog__photos" data-photos hidden></div>
+
+    <section class="poi-dialog__section" data-description-section hidden>
+      <p class="poi-dialog__description" data-description></p>
+      <p class="poi-dialog__credit" data-description-credit hidden></p>
+    </section>
+
+    <section class="poi-dialog__section" data-facts-section hidden>
+      <h3 class="poi-dialog__heading">Auf einen Blick</h3>
+      <dl class="poi-facts" data-facts></dl>
+    </section>
+
+    <section class="poi-dialog__section" data-links-section hidden>
+      <h3 class="poi-dialog__heading">Mehr erfahren</h3>
+      <div class="poi-links" data-links></div>
+    </section>
+
+    <footer class="poi-dialog__footer">
+      <p class="poi-dialog__coordinates" data-coordinates></p>
+      <p class="poi-dialog__sources" data-sources hidden></p>
+    </footer>
+
+    <p class="poi-dialog__error" data-error role="alert" hidden></p>
+    <button class="primary poi-dialog__collect" data-collect>Zum Atlas hinzufügen</button>
   </dialog>
   <script>
     document.getElementById("theme-toggle").addEventListener("click", function () {
