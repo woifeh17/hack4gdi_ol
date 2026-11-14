@@ -127,24 +127,16 @@ $('show-poi-distance').addEventListener('change', () => {
   } catch { /* Preference remains active for this session. */ }
 });
 
-// Transparente Glasflächen (Performance-Modus). Die 24px-Backdrop-Blur-
-// Effekte über der laufenden Kamera sind auf Mittelklasse-Smartphones
-// extrem teuer; ohne sie laufen Marker, Sheet und Header als Vollflächen.
-const GLASS_STORAGE_KEY = 'windowlens.glassSurfaces.v1';
-const applyGlassPreference = () => {
-  if ($('glass-surfaces').checked) delete document.documentElement.dataset.glass;
+// The document head has already selected the initial appearance.
+const glassSurfaces = $('glass-surfaces');
+glassSurfaces.checked = document.documentElement.dataset.glass !== 'off';
+glassSurfaces.addEventListener('change', () => {
+  if (glassSurfaces.checked) delete document.documentElement.dataset.glass;
   else document.documentElement.dataset.glass = 'off';
-};
-try {
-  $('glass-surfaces').checked = localStorage.getItem(GLASS_STORAGE_KEY) !== 'off';
-} catch { /* Private mode can disallow storage. */ }
-$('glass-surfaces').addEventListener('change', () => {
   try {
-    localStorage.setItem(GLASS_STORAGE_KEY, $('glass-surfaces').checked ? 'on' : 'off');
+    localStorage.setItem('windowlens.glassSurfaces.v1', glassSurfaces.checked ? 'on' : 'off');
   } catch { /* Preference remains active for this session. */ }
-  applyGlassPreference();
 });
-applyGlassPreference();
 
 // AR-Overlay – nur eine einzige Instanz
 const renderOverlay = createOverlay(

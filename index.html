@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="de" data-theme="dark">
+<html lang="de" data-theme="dark" data-glass="off">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -15,13 +15,19 @@
       try { saved = localStorage.getItem("theme"); } catch { /* Storage may be unavailable. */ }
       var prefersLight = window.matchMedia("(prefers-color-scheme: light)").matches;
       document.documentElement.dataset.theme = saved || (prefersLight ? "light" : "dark");
-      // Performance-Modus (Glasflächen aus) schon vor dem ersten Rendern
-      // anwenden, damit die Blur-Effekte nicht kurz aufblitzen.
-      try {
-        if (localStorage.getItem("windowlens.glassSurfaces.v1") === "off") {
-          document.documentElement.dataset.glass = "off";
-        }
-      } catch { /* Storage may be unavailable. */ }
+      // A saved choice takes precedence over the automatic default.
+      let savedGlass;
+      try { savedGlass = localStorage.getItem("windowlens.glassSurfaces.v1"); } catch { /* Storage may be unavailable. */ }
+
+      const supportsGlass = window.CSS?.supports("backdrop-filter", "blur(1px)") ||
+        window.CSS?.supports("-webkit-backdrop-filter", "blur(1px)");
+      const reduceTransparency = window.matchMedia("(prefers-reduced-transparency: reduce)").matches;
+      const iPhoneVersion = navigator.userAgent.match(/iPhone OS (\d+)/);
+      const modernIPhone = iPhoneVersion && Number(iPhoneVersion[1]) >= 18;
+      const reportedCapacity = navigator.deviceMemory >= 8 && navigator.hardwareConcurrency >= 8;
+      const autoGlass = supportsGlass && !reduceTransparency && (modernIPhone || reportedCapacity);
+      const glassEnabled = savedGlass === "on" || (savedGlass !== "off" && autoGlass);
+      if (glassEnabled) delete document.documentElement.dataset.glass;
     })();
   </script>
 </head>
@@ -95,10 +101,10 @@
             <span>Entfernung an POIs anzeigen</span>
           </label>
           <label class="settings-check">
-            <input id="glass-surfaces" type="checkbox" checked>
+            <input id="glass-surfaces" type="checkbox" aria-describedby="glass-surfaces-help">
             <span>Transparente Glasflächen</span>
           </label>
-          <p class="device-status">Auf langsameren Smartphones deaktivieren: ersetzt die Blur-Effekte durch schnelle Vollflächen.</p>
+          <p id="glass-surfaces-help" class="device-status">Die Voreinstellung richtet sich nach deinem Gerät. Deine Auswahl wird für diesen Browser gespeichert.</p>
           <details id="developer-options" class="developer-options">
             <summary>Entwickleroptionen · Kalibrierung</summary>
             <div class="developer-body">
