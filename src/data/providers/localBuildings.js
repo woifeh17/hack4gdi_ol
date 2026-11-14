@@ -15,14 +15,15 @@ export function createLocalBuildingProvider({
       const url = new URL(building.url, baseUrl);
       if (url.origin !== new URL(baseUrl).origin) throw new Error('Building URL must be same-origin');
       if (!pending.has(url.href)) {
-        const promise = fetchFn(url.href).then(response => {
+        const promise = fetchFn(url.href, {signal: AbortSignal.timeout(20000)}).then(response => {
           if (!response.ok) throw new Error(`Building ${poi.id}: HTTP ${response.status}`);
           return response.json();
         }).catch(error => {
-          pending.delete(url.href);
+          if (pending.get(url.href) === promise) pending.delete(url.href);
           throw error;
         });
         pending.set(url.href, promise);
+        if (pending.size > 24) pending.delete(pending.keys().next().value);
       }
       const geojson = await pending.get(url.href);
       const features = geojson.type === 'FeatureCollection' ? geojson.features : [geojson];

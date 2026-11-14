@@ -12,6 +12,7 @@ const JUMP_THRESHOLD_DEG = 35;
 export function createOrientation(onStatus) {
   let sample, timer;
   let active = false;
+  let generation = 0;
   let yaw = null;
   let pitch = 0;
   const filter = {heading: null, pitch: null, lastTime: null};
@@ -93,11 +94,15 @@ export function createOrientation(onStatus) {
 
   return {
     async start() {
+      if (active) return;
+      const request = ++generation;
       const api = window.DeviceOrientationEvent;
       if (!api) throw new Error('Orientierungssensoren werden hier nicht unterstützt.');
       // iOS verlangt requestPermission() ohne Argument und nur aus einer
       // echten Nutzergeste heraus (siehe startSensors in main.js).
-      if (api.requestPermission && await api.requestPermission() !== 'granted') {
+      const permission = api.requestPermission ? await api.requestPermission() : 'granted';
+      if (request !== generation) return;
+      if (permission !== 'granted') {
         throw new Error('Sensorberechtigung verweigert.');
       }
       active = true;
@@ -107,6 +112,7 @@ export function createOrientation(onStatus) {
       timer = setTimeout(() => { if (!sample) onStatus('Keine Sensordaten. Manuelle Blickrichtung verfügbar.'); }, 2500);
     },
     stop() {
+      generation++;
       active = false;
       clearTimeout(timer);
       window.removeEventListener('deviceorientationabsolute', receive);
