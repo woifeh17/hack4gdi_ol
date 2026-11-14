@@ -13,7 +13,8 @@ const DEFAULT_ZOOM = 9;
  * @param {number} [options.zoom]
  * @param {boolean} [options.defaultOpen]
  * @param {(poi: object) => void} [options.onPoiClick]
- * @returns {{ setPois, setOpen, setView, invalidate, destroy }}
+ * @param {Array<string>} [options.collectedIds]
+ * @returns {{ setPois, setCollected, setOpen, setView, invalidate, destroy }}
  */
 export function createMapPanel(parent, options = {}) {
   const L = window.L;
@@ -31,13 +32,9 @@ export function createMapPanel(parent, options = {}) {
 
   const root = document.createElement('div');
   root.className = 'map-panel';
-  root.innerHTML = `
-    <button type="button" class="map-panel__toggle" aria-expanded="false" aria-label="Karte vergrößern">🗺</button>
-    <div class="map-panel__map"></div>
-  `;
+  root.innerHTML = '<div class="map-panel__map"></div>';
   parent.appendChild(root);
 
-  const toggle = root.querySelector('.map-panel__toggle');
   const mapEl = root.querySelector('.map-panel__map');
 
   const map = L.map(mapEl, { center, zoom });
@@ -59,17 +56,10 @@ export function createMapPanel(parent, options = {}) {
 
   function setOpen(open) {
     root.classList.toggle('map-panel--open', open);
-    toggle.setAttribute('aria-expanded', String(open));
-    toggle.setAttribute('aria-label', open ? 'Karte verkleinern' : 'Karte vergrößern');
-    toggle.textContent = open ? '✕' : '🗺';
     setTimeout(() => map.invalidateSize(), 50);
   }
 
-  toggle.addEventListener('click', () => {
-    setOpen(!root.classList.contains('map-panel--open'));
-  });
-
-    // Start-Ziel-Leiste oben im Panel
+  // Start-Ziel-Leiste oben im Panel
   const listId = `map-stations-${Math.random().toString(36).slice(2, 8)}`;
   const routeBar = document.createElement('form');
   routeBar.className = 'map-route-bar';
@@ -83,13 +73,25 @@ export function createMapPanel(parent, options = {}) {
   root.appendChild(routeBar);
   L.DomEvent.disableClickPropagation(routeBar);
 
+  // Legende: gesammelte POIs vs. noch offene POIs.
+  const legend = document.createElement('div');
+  legend.className = 'map-legend';
+  legend.setAttribute('aria-hidden', 'true');
+  legend.innerHTML = `
+    <span class="map-legend__item"><span class="map-legend__dot map-legend__dot--collected"></span>Im Atlas</span>
+    <span class="map-legend__item"><span class="map-legend__dot map-legend__dot--open"></span>Unbekannt</span>
+  `;
+  root.appendChild(legend);
+
   // Leiste ein- und ausklappen. Der Schalter sitzt in der Leiste selbst,
   // damit er zusammen mit ihr ein- und ausgeblendet wird.
   const barToggle = document.createElement('button');
   barToggle.type = 'button';
   barToggle.className = 'map-route-bar__toggle';
   barToggle.setAttribute('aria-controls', listId);
-  routeBar.querySelector('[name="from"]').after(barToggle);
+  // Der Button wird per CSS oben rechts fixiert; im eingeklappten Zustand
+  // bestimmt er als einzig sichtbares Element die Größe der Leiste.
+  routeBar.insertBefore(barToggle, routeBar.querySelector('.map-route-bar__message'));
 
   function setBarCollapsed(collapsed) {
     routeBar.classList.toggle('map-route-bar--collapsed', collapsed);
@@ -145,8 +147,6 @@ export function createMapPanel(parent, options = {}) {
     }
 
     routeMessage.textContent = `Strecke: ${fromName} → ${toName}`;
-        currentTrip = { from, to };
-    tripButton.disabled = false;
     fitTrip(from, to);
 
     onRouteRequest?.(from, to); // Übergabe an main.js, dort später das Routing
@@ -163,6 +163,13 @@ export function createMapPanel(parent, options = {}) {
   const POI_RADIUS_BASE_ZOOM = 5; // ab hier wächst der Radius
 
   const poiMarkers = [];
+  const collectedIds = new Set(options.collectedIds ?? []);
+
+  function poiStyle(poi) {
+    return collectedIds.has(poi.id)
+      ? {color: '#0f766e', fillColor: '#2dd4bf', fillOpacity: 0.95, weight: 2}
+      : {color: '#1e3a8a', fillColor: '#3b82f6', fillOpacity: 0.9, weight: 2};
+  }
 
   function poiRadiusForZoom(z) {
     return Math.min(
@@ -173,7 +180,7 @@ export function createMapPanel(parent, options = {}) {
 
   function updatePoiRadius() {
     const radius = poiRadiusForZoom(map.getZoom());
-    poiMarkers.forEach((marker) => marker.setRadius(radius));
+    poiMarkers.forEach(({marker}) => marker.setRadius(radius));
   }
 
   function setPois(list) {
@@ -185,20 +192,32 @@ export function createMapPanel(parent, options = {}) {
     list.forEach((poi) => {
       // textContent statt HTML-String, damit Namen nicht als Markup interpretiert werden
       const label = document.createElement('span');
-      label.textContent = poi.name;
+      const setLabel = () => {
+        label.textContent = collectedIds.has(poi.id)
+          ? `${poi.name} · im Atlas`
+          : poi.name;
+      };
+      setLabel();
 
       const marker = L.circleMarker([poi.lat, poi.lon], {
         radius,
-        color: '#1e3a8a',
-        fillColor: '#3b82f6',
-        fillOpacity: 0.9,
-        weight: 2,
+        ...poiStyle(poi),
       }).bindTooltip(label);
 
       if (onPoiClick) marker.on('click', () => onPoiClick(poi));
       marker.addTo(markerLayer);
-      poiMarkers.push(marker);
+      poiMarkers.push({marker, poi, setLabel});
     });
+  }
+
+  // Atlas-Stand von außen setzen; hebt gesammelte POIs farblich hervor.
+  function setCollected(ids) {
+    collectedIds.clear();
+    for (const id of ids ?? []) collectedIds.add(id);
+    for (const entry of poiMarkers) {
+      entry.marker.setStyle(poiStyle(entry.poi));
+      entry.setLabel();
+    }
   }
 
   map.on('zoomend', updatePoiRadius);
@@ -291,8 +310,8 @@ export function createMapPanel(parent, options = {}) {
 
   map.on('zoomend', updateSelectedRadius);
 
-  // Aktuelle Fahrt merken, damit der Button sie wieder anzeigen kann
-  let currentTrip = null;
+  // Aktuelle Fahrt muss nicht separat gemerkt werden: "Strecke zeigen" passt
+  // den Kartenausschnitt direkt an die gewählte Verbindung an.
 
   // Abstand zum Kartenrand als Anteil der Kartengröße (0.12 = 12 %)
   const FIT_PADDING_RATIO = 0.05;
@@ -313,19 +332,7 @@ export function createMapPanel(parent, options = {}) {
     map.fitBounds(L.latLngBounds(a, b), { padding, maxZoom: FIT_MAX_ZOOM });
   }
 
-  // Button "Auf Fahrt zoomen" neben der Leiste, aktiv sobald eine Strecke bestätigt wurde
-  const tripButton = document.createElement('button');
-  tripButton.type = 'button';
-  tripButton.className = 'map-route-bar__trip';
-  tripButton.textContent = 'Auf Fahrt zoomen';
-  tripButton.disabled = true;
-  routeBar.insertBefore(tripButton, routeMessage);
-
-  tripButton.addEventListener('click', () => {
-    if (currentTrip) fitTrip(currentTrip.from, currentTrip.to);
-  });
-
-    // Aktueller Standort als eigene Ebene über den Bahnhöfen
+  // Aktueller Standort als eigene Ebene über den Bahnhöfen
   const locationPane = map.getPane('location') ?? map.createPane('location');
   locationPane.style.zIndex = 680;
 
@@ -334,13 +341,44 @@ export function createMapPanel(parent, options = {}) {
   let locationMarker = null;
   let lastLocation = null; // [lat, lon]
 
-  // Button "Auf Standort zoomen", aktiv sobald ein Standort vorliegt
-  const locateButton = document.createElement('button');
-  locateButton.type = 'button';
-  locateButton.className = 'map-route-bar__locate';
-  locateButton.textContent = 'Auf Standort zoomen';
-  locateButton.disabled = true;
-  routeBar.insertBefore(locateButton, routeMessage);
+  // "Auf Standort zoomen" als Leaflet-Control, direkt unter den +/−-Buttons.
+  let locateButton = null;
+
+  function setLocateEnabled(enabled) {
+    if (!locateButton) return;
+    const label = enabled ? 'Auf Standort zoomen' : 'Standort noch nicht verfügbar';
+    locateButton.setAttribute('aria-disabled', String(!enabled));
+    locateButton.setAttribute('aria-label', label);
+    locateButton.title = label;
+  }
+
+  const LocateControl = L.Control.extend({
+    options: { position: 'topleft' },
+    onAdd() {
+      const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control map-locate-control');
+      locateButton = L.DomUtil.create('a', 'map-locate-control__button', container);
+      locateButton.href = '#';
+      locateButton.setAttribute('role', 'button');
+      locateButton.innerHTML = `
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <circle cx="12" cy="12" r="6.5" fill="none" stroke="currentColor" stroke-width="2"/>
+          <circle cx="12" cy="12" r="1.75" fill="currentColor"/>
+          <path d="M12 2.5v3.5M12 18v3.5M2.5 12H6M18 12h3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>`;
+      setLocateEnabled(false);
+
+      L.DomEvent.disableClickPropagation(container);
+      L.DomEvent.on(locateButton, 'click', (event) => {
+        L.DomEvent.stop(event);
+        if (locateButton.getAttribute('aria-disabled') === 'true') return;
+        zoomToLocation();
+      });
+
+      return container;
+    },
+  });
+
+  new LocateControl().addTo(map);
 
   function showLocation(lat, lon) {
     lastLocation = [lat, lon];
@@ -356,7 +394,30 @@ export function createMapPanel(parent, options = {}) {
     } else {
       locationMarker.setLatLng([lat, lon]);
     }
-    locateButton.disabled = false;
+    setLocateEnabled(true);
+  }
+
+  function clearLocation() {
+    lastLocation = null;
+    setLocateEnabled(false);
+    locationLayer.clearLayers();
+    locationMarker = null;
+  }
+
+  // Standort kommt vom zentralen Position-Service in main.js, damit es nur
+  // eine Geolocation-Anfrage und einen Berechtigungsdialog gibt.
+  // Unterstützt sowohl setLocation(lat, lon) als auch setLocation(fix).
+  function setLocation(latOrFix, lon) {
+    if (latOrFix && typeof latOrFix === 'object') {
+      if (latOrFix.source === 'gps') setLocation(latOrFix.lat, latOrFix.lon);
+      else clearLocation();
+      return;
+    }
+    if (!Number.isFinite(latOrFix) || !Number.isFinite(lon)) {
+      clearLocation();
+      return;
+    }
+    showLocation(latOrFix, lon);
   }
 
   function zoomToLocation() {
@@ -365,8 +426,6 @@ export function createMapPanel(parent, options = {}) {
     map.invalidateSize();
     map.setView(lastLocation, LOCATE_ZOOM);
   }
-
-  locateButton.addEventListener('click', zoomToLocation);
 
   function addStations(data) {
     indexStations(data); // nur für die Suche, nicht zeichnen
@@ -385,19 +444,12 @@ export function createMapPanel(parent, options = {}) {
   routeBar.addEventListener('change', updateSelectionFromInputs);
 
   return {
-    setLocation(fix) {
-      if (fix?.source === 'gps') showLocation(fix.lat, fix.lon);
-      else {
-        locationLayer.clearLayers();
-        locationMarker = null;
-        lastLocation = null;
-        locateButton.disabled = true;
-      }
-    },
     setPois,
+    setCollected,
     setOpen,
     addGeoJson,
     addStations,
+    setLocation,
     invalidate: () => map.invalidateSize(),
     setView: (lat, lon, z) => map.setView([lat, lon], z ?? map.getZoom()),
     destroy() {
