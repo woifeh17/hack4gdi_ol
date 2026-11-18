@@ -1,35 +1,60 @@
-# Bahnorama · Bahn-Atlas
+# Bahnorama
 
-Mobile Web-App für georeferenzierte POIs im Kamerabild, einen persönlichen Atlas und GPS-Fahrtaufzeichnungen.
+Bahnorama ist eine mobile Web-App, mit der du Sehenswürdigkeiten aus dem Zugfenster entdecken kannst. Die AR-Ansicht blendet Orte und ausgewählte 3D-Gebäude ins Kamerabild ein. Im persönlichen Atlas sammelst du entdeckte Orte und siehst, welche Strecken du bereits gefahren bist.
 
-## Start
+**[Bahnorama öffnen](https://woifeh17.github.io/hack4gdi_ol/)** · Prototyp aus dem Hack4GDI 2026 mit einem Testgebiet in Mainz.
 
-Im Repository-Ordner `python -m http.server 8000` ausführen (Windows alternativ `py -m http.server 8000`) und http://localhost:8000 öffnen. Das Projekt verwendet ES-Module ohne Build-Schritt oder Paketinstallation. Die Demo startet mit Blick auf die MEWA Arena. Auf den Marker tippen und den POI zum Atlas hinzufügen.
+## App ausprobieren
 
-Für den Mobiltest die App in einem eigenen Tab über HTTPS öffnen, Kamera und Sensoren über ihre Schaltflächen aktivieren und bei relativen Sensorwerten den bekannten Kameraazimut kalibrieren. Für GitHub Pages aus `main` und `/ (root)` deployen, sofern die Repository-Sichtbarkeit und der Tarif das unterstützen.
+- **Entdecken (🔍)** öffnet die AR-Ansicht. Aktiviere Kamera, GPS und Bewegungssensoren, wenn die App danach fragt. Tippe auf einen eingeblendeten Ort, um seine Detailkarte zu öffnen und ihn in den Atlas aufzunehmen.
+- **Karte und Einstellungen** erreichst du über den Griff am unteren Rand. Die Karte zeigt die Orte, das Schienennetz und die Bahnhofssuche. Mit Start- und Zielbahnhof lässt sich der Kartenausschnitt auf beide Stationen ausrichten. In den Einstellungen kannst du unter anderem POI-Entfernungen und transparente Glasflächen ein- oder ausschalten.
+- **Fahrt starten** zeichnet GPS-Punkte auf. Mit **Fahrt beenden** speicherst du die Aufzeichnung im Atlas, sofern verwertbare Standortpunkte vorliegen.
+- **Atlas (📖)** zeigt gesammelte Orte und gefahrene Kilometer. Tippe auf einen der Zähler, um die zugehörige Liste aufzuklappen. Die Karte zeigt gesammelte Orte als anklickbare Marker und gespeicherte Fahrten als Heatmap. Wiederholt befahrene Abschnitte werden stärker hervorgehoben.
 
-`npm test` führt die Tests mit Node.js ab Version 20 aus.
+Ohne GPS verwendet die AR-Ansicht einen Referenzstandort in Mainz. Über **Einstellungen → Entwickleroptionen** kannst du die Blickrichtung manuell einstellen oder kalibrieren. Für einen Demo-Blick Richtung MEWA Arena eignen sich **203° Azimut und 0° Neigung**. Wenn iPhone Safari den Standortzugriff verweigert, öffne die App direkt in einem Safari-Tab und prüfe sowohl die Standortfreigabe für die Website als auch die Ortungsdienste für Safari-Websites.
 
-## Module
+## Lokal starten
 
-| Modul | Aufgabe |
+Klone das Repository und starte im Projektordner einen lokalen Webserver. Dafür genügt Python 3.
+
+```bash
+git clone https://github.com/woifeh17/hack4gdi_ol.git
+cd hack4gdi_ol
+python -m http.server 8000
+```
+
+Unter Windows kannst du `py -m http.server 8000` verwenden. Öffne danach [http://localhost:8000](http://localhost:8000). Für den Test auf einem Smartphone nutze die veröffentlichte HTTPS-Version. Die App braucht weder einen Build-Schritt noch eine npm-Installation oder ein eigenes Backend. Leaflet, Grundkartenkacheln und externe Bilder werden bei Bedarf über das Netz geladen.
+
+Zum Ausführen der automatisierten Tests benötigst du **Node.js ab Version 20**.
+
+```bash
+npm test
+```
+
+Die App lässt sich aus dem Repository-Hauptverzeichnis über GitHub Pages veröffentlichen. Der veröffentlichte Projektstand liegt auf `main`.
+
+## Projektstruktur
+
+| Bereich | Aufgabe |
 | --- | --- |
-| `src/device/camera.js` | Video, Rückkamera bevorzugen, Kamerawechsel, Stream-Lebenszyklus |
-| `src/device/orientation.js` | Absolute und relative Sensordaten, manuelle Orientierung, Kalibrierung |
-| `src/device/position.js` | Browser-Geolocation mit Mainz-Fallback |
-| `src/ar/pose.js` | Austauschbarer Provider für WGS84-Position und Kamerabasis im lokalen ENU-System |
-| `src/ar/geometry.js`, `overlay.js` | Azimut, Distanz und Perspektivprojektion, antippbare Marker |
-| `src/data/` | POI-Katalog, Modelle und Detailansicht mit optionaler Bildergalerie |
-| `src/atlas/` | Lokale Speicherung und Dashboard |
-| `src/journey/recorder.js` | GPS-Segmente und Distanz bei laufender Aufzeichnung |
-| `src/main.js` | Verbindet die Module und die Bedienelemente |
+| [`index.html`](index.html), [`style.css`](style.css), [`src/main.js`](src/main.js) | Oberfläche, Darstellung und Verbindung der Module |
+| [`src/device/`](src/device/) | Kamera, Standort und Geräteorientierung |
+| [`src/ar/`](src/ar/) | Perspektivprojektion von POIs und schattierten Gebäudemodellen auf einem Canvas |
+| [`src/data/`](src/data/), [`src/poi/`](src/poi/) | POI-Katalog, Zusatzinformationen und bedarfsgerechtes Laden der Gebäudemodelle |
+| [`src/map/`](src/map/) | Leaflet-Karte, Schienennetz, Standortmarker und Bahnhofssuche |
+| [`src/atlas/`](src/atlas/), [`src/journey/`](src/journey/) | Persönlicher Atlas, GPS-Aufzeichnung und Heatmap |
+| [`scripts/`](scripts/), [`.github/workflows/`](.github/workflows/) | Aufbereitung von POI-Informationen und Gebäudegeometrien |
 
-## Erweiterung für den Zug
+## Daten und Quellen
 
-Der Renderer liest pro Frame die Position (`lat`, `lon`, optionale `altitude`) und Kamerabasis (`right`, `up`, `forward`, jeweils Ost/Nord/Oben) aus `getFrame()`. Für einen Zug-Pose-Provider kann die Schienenposition die GPS-Position ersetzen. Die Kamerarotation relativ zum Wagen wird mit dessen Rotation im ENU-System zusammengesetzt. Translation im Wagen und Höhenbezug bei Bedarf im Provider ergänzen. Den Zug-Pose-Provider dann in `main.js` einsetzen.
+- **POIs** – Der [Mainzer Testkatalog](src/data/mainzTestPois.js) enthält 39 Orte im Umkreis von bis zu 5 km um den Referenzstandort, darunter Orte in Bretzenheim und entlang der Linie 52. Die [GeoJSON-Datei](mainzTestPois.geojson) enthält die Punktanker für die Nutzung im GIS. In den Detailkarten stehen Quellen, Bildnachweise und die jeweils geltenden Lizenzen. OpenStreetMap-Daten stehen unter der [ODbL](https://www.openstreetmap.org/copyright).
+- **Gebäude** – Die App lädt vorberechnete [LoD2-Modelle](assets/buildings/lod2/) und verwendet bei Bedarf [OSM-Grundrisse](assets/buildings/) mit abgeleiteten oder geschätzten Höhen. Amtliche Daten © GeoBasis-DE / LVermGeoRP 2026, [dl-de/by-2-0](https://www.govdata.de/dl-de/by-2-0), [LVermGeoRP](https://www.lvermgeo.rlp.de), Daten bearbeitet. OSM-Grundrisse © OpenStreetMap-Mitwirkende, ODbL, Auszug von [Geofabrik](https://www.geofabrik.de/data/download.html).
+- **Schienennetz und Bahnhöfe** – Deutsche Bahn AG über die [Mobilithek](https://mobilithek.info/offers/922109165921083392), [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/deed.de). Grundkarte © Esri.
 
-Die drei Drahtgitter sind geschätzte LOD1-Platzhalter. Das Modellformat verwendet lokale ENU-Koordinaten in Metern und eine Kantenliste. Vermessene Grundrisse, Höhen und LOD2-Dächer können über ein separates Modellmodul ergänzt werden. Für POIs ohne gemeinsame Höhenreferenz wird der Fußpunkt auf Beobachterhöhe gesetzt. Die beiden Sichtfelder sind kalibrierbare Annahmen. Die Projektion berücksichtigt die tatsächliche Bildfläche einschließlich möglicher schwarzer Ränder.
+Der Katalog wird zur Laufzeit um die vorberechneten Inhalte in [`poiEnrichment.js`](src/data/poiEnrichment.js) ergänzt. Mit `npm run enrich-pois` lassen sich diese Inhalte aus OSM, Wikidata, Wikipedia und Wikimedia Commons neu erzeugen. Die [Gebäude-Dokumentation](BUILDINGS_README.md) beschreibt den Export lokaler Gebäudegeometrien und amtlicher LoD2-Daten.
 
-Die Details zeigen aktuell Beschreibung, Koordinaten und Quelle. Die Galerie liest optionale Einträge `photos: [{url, alt, credit}]` aus dem Katalog. Bilddateien und Nutzungsnachweise können pro POI ergänzt werden.
+## Grenzen des Prototyps
 
-Der Atlas speichert POI-IDs und abgeschlossene Fahrten im Browser. Für eine Fahrt zählen aufeinanderfolgende verwertbare Standortfixes. Signalunterbrechungen und unplausible Sprünge beginnen ein neues Segment, der Mainz-Fallback zählt nie. Die Kilometer sind GPS-Schätzwerte ohne Zuordnung zum Schienennetz. Die App erfasst Fahrten im Vordergrund. Der Atlas bleibt an Browser und Website gebunden.
+- **AR-Ausrichtung** – Position und Ausrichtung hängen von der Genauigkeit des GPS und der Bewegungssensoren ab. Die vertikale Platzierung ist eine Näherung. Der Prototyp gleicht die Kameraposition weder mit einem Geländemodell noch mit der Lage des Zuges auf dem Gleis ab.
+- **Fahrtaufzeichnung** – Die App zeichnet im Vordergrund auf. Kilometer sind Schätzwerte aus aufeinanderfolgenden GPS-Punkten. Ausfälle und unplausible Sprünge trennen die Aufzeichnung in Segmente. Die Heatmap verwendet diese Segmente ohne Abgleich mit dem Schienennetz. Die Bahnhofssuche berechnet derzeit keine Zugroute.
+- **Speicherung** – Gesammelte POIs, abgeschlossene Fahrten und Einstellungen liegen im lokalen Speicher des Browsers. Beim Wechsel des Browsers oder beim Löschen der Website-Daten stehen die bisherigen Einträge dort nicht mehr zur Verfügung.
